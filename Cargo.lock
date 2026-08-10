@@ -963,12 +963,17 @@ dependencies = [
 name = "lievre-core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "argon2",
  "chrono",
+ "jsonwebtoken",
  "lievre-shared",
+ "rand",
  "serde",
  "serde_json",
  "sqlx",
  "thiserror 1.0.69",
+ "tokio",
  "uuid",
 ]
 

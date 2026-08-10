@@ -13,3 +13,10 @@ sqlx.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 thiserror.workspace = true
+anyhow.workspace = true
+jsonwebtoken.workspace = true
+argon2.workspace = true
+rand.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

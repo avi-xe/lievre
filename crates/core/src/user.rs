@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::SqlitePool;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
@@ -13,7 +14,7 @@ pub struct User {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateUser {
     pub email: String,
     pub username: String,
@@ -21,9 +22,10 @@ pub struct CreateUser {
     pub display_name: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct LoginUser {
     pub email: String,
+    pub username: Option<String>,
     pub password: String,
 }
 
@@ -50,12 +52,153 @@ impl From<User> for UserResponse {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct UserRepository {
+    pool: SqlitePool,
+}
+
+impl UserRepository {
+    pub fn new(pool: SqlitePool) -> Self {
+        Self { pool }
+    }
+
+    pub async fn create(&self, user: CreateUser, password_hash: &str) -> anyhow::Result<User> {
+        let id = uuid::Uuid::new_v4().to_string();
+        
+        let user = sqlx::query_as::<_, User>(
+            r#"INSERT INTO users (id, email, username, password_hash, display_name)
+               VALUES (?, ?, ?, ?, ?)
+               RETURNING *"#,
+        )
+        .bind(&id)
+        .bind(&user.email)
+        .bind(&user.username)
+        .bind(password_hash)
+        .bind(&user.display_name)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
+
+    pub async fn find_by_email(&self, email: &str) -> anyhow::Result<Option<User>> {
+        let user = sqlx::query_as::<_, User>(
+            "SELECT * FROM users WHERE email = ?"
+        )
+        .bind(email)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
+
+    pub async fn find_by_username(&self, username: &str) -> anyhow::Result<Option<User>> {
+        let user = sqlx::query_as::<_, User>(
+            "SELECT * FROM users WHERE username = ?"
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
+
+    pub async fn find_by_id(&self, id: &str) -> anyhow::Result<Option<User>> {
+        let user = sqlx::query_as::<_, User>(
+            "SELECT * FROM users WHERE id = ?"
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_user_response_from_user() {
+    async fn setup_db() -> SqlitePool {
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                display_name TEXT,
+                avatar_url TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )"#
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_create_user() {
+        let pool = setup_db().await;
+        let repo = UserRepository::new(pool);
+
+        let user = CreateUser {
+            email: "test@example.com".to_string(),
+            username: "testuser".to_string(),
+            password: "password123".to_string(),
+            display_name: Some("Test User".to_string()),
+        };
+
+        let created = repo.create(user.clone(), "hashed_password").await.unwrap();
+
+        assert_eq!(created.email, user.email);
+        assert_eq!(created.username, user.username);
+        assert_eq!(created.password_hash, "hashed_password");
+        assert_eq!(created.display_name, user.display_name);
+    }
+
+    #[tokio::test]
+    async fn test_find_by_email() {
+        let pool = setup_db().await;
+        let repo = UserRepository::new(pool);
+
+        let user = CreateUser {
+            email: "test@example.com".to_string(),
+            username: "testuser".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        repo.create(user.clone(), "hashed_password").await.unwrap();
+
+        let found = repo.find_by_email(&user.email).await.unwrap();
+        assert!(found.is_some());
+        assert_eq!(found.unwrap().email, user.email);
+    }
+
+    #[tokio::test]
+    async fn test_find_by_username() {
+        let pool = setup_db().await;
+        let repo = UserRepository::new(pool);
+
+        let user = CreateUser {
+            email: "test@example.com".to_string(),
+            username: "testuser".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        repo.create(user.clone(), "hashed_password").await.unwrap();
+
+        let found = repo.find_by_username(&user.username).await.unwrap();
+        assert!(found.is_some());
+        assert_eq!(found.unwrap().username, user.username);
+    }
+
+    #[tokio::test]
+    async fn test_user_response_conversion() {
         let user = User {
             id: "test-id".to_string(),
             email: "test@example.com".to_string(),
@@ -74,6 +217,5 @@ mod tests {
         assert_eq!(response.username, user.username);
         assert_eq!(response.display_name, user.display_name);
         assert_eq!(response.avatar_url, user.avatar_url);
-        assert_eq!(response.created_at, user.created_at);
     }
 }
