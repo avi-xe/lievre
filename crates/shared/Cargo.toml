@@ -13,3 +13,6 @@ thiserror.workspace = true
 axum.workspace = true
 sqlx.workspace = true
 anyhow.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true
