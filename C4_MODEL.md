@@ -2,7 +2,7 @@
 
 This document describes the current architecture using the [C4 model](https://c4model.com/) — four levels of abstraction for software architecture.
 
-**Current State:** Epic 1 (Foundation) + Epic 2 (File Import) complete.
+**Current State:** Epic 1 (Foundation) + Epic 2 (File Import) + Epic 3 (Activity Processing) complete.
 
 ---
 
@@ -127,6 +127,7 @@ graph TB
     subgraph "API Server (crates/api)"
         Main["main.rs<br/><i>Server bootstrap, routing</i>"]
         ImportAPI["import.rs<br/><i>POST /api/import/gpx</i>"]
+        GeoJsonAPI["geojson.rs<br/><i>GET /api/activities/:id/geojson</i>"]
     end
 
     subgraph "Core Library (crates/core)"
@@ -144,6 +145,11 @@ graph TB
             Batch["batch.rs<br/><i>Batch importer<br/>ZIP detection, format routing</i>"]
             Strava["strava.rs<br/><i>Strava CSV parser<br/>Unit conversion (mph→m/s)</i>"]
         end
+
+        subgraph "Processing"
+            Job["job.rs<br/><i>Job queue<br/>SQLite-backed, retry logic</i>"]
+            Stats["stats.rs<br/><i>Stats computation<br/>Distance, speed, elevation</i>"]
+        end
     end
 
     subgraph "Shared Library (crates/shared)"
@@ -156,6 +162,7 @@ graph TB
     end
 
     Main --> ImportAPI
+    Main --> GeoJsonAPI
     Main --> Activity
     Main --> Route
     ImportAPI --> GPX
@@ -163,9 +170,12 @@ graph TB
     ImportAPI --> TCX
     ImportAPI --> Batch
     ImportAPI --> Strava
+    GeoJsonAPI --> Route
     Activity --> DB
     Route --> DB
     User --> DB
+    Job --> DB
+    Stats --> DB
     Auth -.->|"Future"| DB
 ```
 
@@ -291,16 +301,17 @@ impl GpxParser {
 
 ## What's Built vs. What's Planned
 
-### ✅ Built (Epic 1 + 2)
+### ✅ Built (Epic 1 + 2 + 3)
 
 | Layer | Status | Components |
 |-------|--------|------------|
-| Database | ✅ SQLite | Pool, migrations, CRUD tables |
+| Database | ✅ SQLite | Pool, migrations, CRUD tables, jobs, stats |
 | Auth | ✅ Local | Register, login, JWT |
 | Activities | ✅ CRUD | Create, read, delete |
 | Routes | ✅ Storage | GeoJSON, coordinates |
 | Import | ✅ Multi-format | GPX, FIT, TCX, ZIP, Strava CSV |
-| API | ✅ REST | Health, import endpoint |
+| Processing | ✅ Background | Job queue with retry, stats computation |
+| API | ✅ REST | Health, import, GeoJSON endpoint |
 
 ### 🔨 Not Yet Built
 
@@ -321,26 +332,29 @@ impl GpxParser {
 graph LR
     A[Epic 1: Foundation] --> B[Epic 2: File Import]
     B --> C[Epic 3: Activity Processing]
-    C --> D[Epic 4: Social Features]
-    D --> E[Epic 5: Federation]
-    E --> F[Epic 6: Frontend PWA]
+    C --> D[Epic 4: Maps & Visualization]
+    D --> E[Epic 5: Social Features]
+    E --> F[Epic 6: Federation]
+    F --> G[Epic 7: PWA Frontend]
 
     style A fill:#90EE90
     style B fill:#90EE90
-    style C fill:#FFD700
+    style C fill:#90EE90
     style D fill:#FFD700
     style E fill:#FFD700
     style F fill:#FFD700
+    style G fill:#FFD700
 ```
 
 | Epic | Focus | Key Deliverables |
 |------|-------|------------------|
 | **1** ✅ | Foundation | DB, Auth, API scaffold |
 | **2** ✅ | File Import | GPX/FIT/TCX parsers, batch import |
-| **3** | Activity Processing | Stats computation, route analysis, background jobs |
-| **4** | Social Features | Follow, like, comment, feed |
-| **5** | Federation | ActivityPub, WebFinger, federation with Mastodon |
-| **6** | Frontend PWA | React app, maps, charts, offline support |
+| **3** ✅ | Activity Processing | Stats computation, job queue, GeoJSON |
+| **4** | Maps & Visualization | Leaflet maps, elevation charts |
+| **5** | Social Features | Follow, like, comment, feed |
+| **6** | Federation | ActivityPub, WebFinger, federation with Mastodon |
+| **7** | Frontend PWA | React app, offline support |
 
 ---
 
