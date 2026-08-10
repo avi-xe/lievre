@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum JobStatus {

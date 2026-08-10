@@ -2,19 +2,13 @@ use axum::{
     extract::{Multipart, State},
     Json,
 };
-use lievre_core::{ActivityRepository, GpxParser, RouteRepository, CreateActivity, CreateRoute};
+use lievre_core::GpxParser;
 use lievre_shared::Error;
 
 #[derive(Debug, serde::Serialize)]
 pub struct ImportResponse {
     pub activity_id: String,
     pub message: String,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct ImportError {
-    pub error: String,
-    pub file: Option<String>,
 }
 
 pub async fn import_gpx(
@@ -65,21 +59,9 @@ mod tests {
             activity_id: "test-id".to_string(),
             message: "Success".to_string(),
         };
-        
+
         let json = serde_json::to_string(&response).unwrap();
         assert!(json.contains("activity_id"));
         assert!(json.contains("message"));
-    }
-
-    #[test]
-    fn test_import_error_serialization() {
-        let error = ImportError {
-            error: "Invalid file".to_string(),
-            file: Some("test.gpx".to_string()),
-        };
-        
-        let json = serde_json::to_string(&error).unwrap();
-        assert!(json.contains("error"));
-        assert!(json.contains("file"));
     }
 }

@@ -1,5 +1,4 @@
 use axum::{extract::{Path, State}, http::StatusCode, Json};
-use lievre_core::RouteRepository;
 
 pub async fn get_activity_geojson(
     State(state): State<crate::AppState>,

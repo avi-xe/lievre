@@ -59,7 +59,7 @@ impl FitParser {
                         match field.name() {
                             "start_time" => {
                                 if let fitparser::Value::Timestamp(val) = field.value() {
-                                    let epoch = chrono::DateTime::parse_from_rfc3339("1989-12-31T00:00:00+00:00")
+                                    let _epoch = chrono::DateTime::parse_from_rfc3339("1989-12-31T00:00:00+00:00")
                                         .unwrap()
                                         .timestamp();
                                     // val is DateTime<Local>, convert to UTC

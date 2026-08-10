@@ -1,5 +1,4 @@
 use axum::{extract::State, http::StatusCode, Json};
-use lievre_core::AuthService;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -48,7 +47,7 @@ pub async fn register(
     let auth_service = &state.auth;
     let user = lievre_core::user::LoginUser {
         email: req.email,
-        username: None,
+        username: Some(req.username),
         password: req.password.clone(),
     };
 

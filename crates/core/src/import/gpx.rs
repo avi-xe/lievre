@@ -34,7 +34,6 @@ impl GpxParser {
         let mut elevation_data: Vec<f64> = Vec::new();
         let mut times: Vec<chrono::DateTime<chrono::Utc>> = Vec::new();
 
-        let mut in_trkpt = false;
         let mut current_lat: Option<f64> = None;
         let mut current_lon: Option<f64> = None;
         let mut current_ele: Option<f64> = None;
@@ -48,7 +47,6 @@ impl GpxParser {
                 Ok(Event::Start(e)) => {
                     match e.name().as_ref() {
                         b"trkpt" => {
-                            in_trkpt = true;
                             current_lat = None;
                             current_lon = None;
                             current_ele = None;
@@ -89,7 +87,6 @@ impl GpxParser {
                 Ok(Event::End(e)) => {
                     match e.name().as_ref() {
                         b"trkpt" => {
-                            in_trkpt = false;
                             if let (Some(lat), Some(lon)) = (current_lat, current_lon) {
                                 // GPX format is lat, lon - we store as [lon, lat]
                                 coordinates.push(vec![lon, lat]);

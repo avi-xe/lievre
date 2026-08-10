@@ -50,9 +50,7 @@ impl TcxParser {
             elevation_data: Vec::new(),
         };
 
-        let mut in_activity = false;
         let mut in_lap = false;
-        let mut in_track = false;
         let mut in_trackpoint = false;
         let mut in_time = false;
         let mut in_distance = false;
@@ -62,15 +60,13 @@ impl TcxParser {
         let mut in_totaltime = false;
         let mut total_distance: f64 = 0.0;
         let mut total_time: f64 = 0.0;
-        let mut total_elevation: f64 = 0.0;
+        let _total_elevation: f64 = 0.0;
 
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(e)) => {
                     match e.name().as_ref() {
-                        b"Activity" => in_activity = true,
                         b"Lap" => in_lap = true,
-                        b"Track" => in_track = true,
                         b"Trackpoint" => in_trackpoint = true,
                         b"Time" => {
                             if in_trackpoint {
@@ -109,7 +105,7 @@ impl TcxParser {
                     let text = e.unescape()?.to_string();
                     
                     if in_time && in_trackpoint {
-                        if let Ok(time) = text.parse::<chrono::DateTime<chrono::Utc>>() {
+                        if let Ok(_time) = text.parse::<chrono::DateTime<chrono::Utc>>() {
                             activity.coordinates.push(Vec::new()); // Placeholder
                         }
                     } else if in_altitude && in_trackpoint {
@@ -136,9 +132,7 @@ impl TcxParser {
                 }
                 Ok(Event::End(e)) => {
                     match e.name().as_ref() {
-                        b"Activity" => in_activity = false,
                         b"Lap" => in_lap = false,
-                        b"Track" => in_track = false,
                         b"Trackpoint" => in_trackpoint = false,
                         b"Time" => in_time = false,
                         b"DistanceMeters" => in_distance = false,
