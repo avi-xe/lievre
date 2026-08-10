@@ -58,3 +58,6 @@ quick-xml = { version = "0.31", features = ["serialize"] }
 
 # FIT file parsing
 fitparser = "0.11"
+
+# CSV parsing
+csv = "1.3"
