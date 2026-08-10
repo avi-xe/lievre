@@ -74,8 +74,12 @@ impl RouteRepository {
         let coordinates: Vec<Vec<f64>> = serde_json::from_str(&route.coordinates)?;
         
         let geojson = serde_json::json!({
-            "type": "LineString",
-            "coordinates": coordinates
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": coordinates
+            },
+            "properties": {}
         });
 
         Ok(geojson)
@@ -216,8 +220,9 @@ mod tests {
         let created = repo.create(route).await.unwrap();
         let geojson = repo.to_geojson(&created).await.unwrap();
 
-        assert_eq!(geojson["type"], "LineString");
-        assert!(geojson["coordinates"].is_array());
+        assert_eq!(geojson["type"], "Feature");
+        assert_eq!(geojson["geometry"]["type"], "LineString");
+        assert!(geojson["geometry"]["coordinates"].is_array());
     }
 
     #[tokio::test]

@@ -28,7 +28,7 @@ pub struct UserResponse {
 }
 
 /// Extract token from Authorization header
-fn extract_token(headers: &axum::http::header::HeaderMap) -> Result<String, (StatusCode, String)> {
+pub fn extract_token(headers: &axum::http::header::HeaderMap) -> Result<String, (StatusCode, String)> {
     let auth_header = headers
         .get("authorization")
         .and_then(|v| v.to_str().ok())

@@ -121,7 +121,7 @@ async fn test_feed_sorted_by_time() {
             .json(&json!({
                 "activity_type": "ride",
                 "title": format!("Ride {}", i),
-                "started_at": format!("2024-01-15T0{}:00:00Z", 8 + i),
+                "started_at": format!("2024-01-15T{:02}:00:00Z", 8 + i),
                 "visibility": "public"
             }))
             .send()

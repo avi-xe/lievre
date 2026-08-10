@@ -1,11 +1,14 @@
+mod activities;
 mod auth;
+mod feed;
 mod geojson;
 mod import;
+mod social;
 
-use axum::{routing::{get, post}, Router};
+use axum::{routing::{get, post, delete}, Router};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use lievre_core::{ActivityRepository, AuthService, RouteRepository, UserRepository};
+use lievre_core::{ActivityRepository, AuthService, RouteRepository, SocialRepository, UserRepository};
 
 /// Combined application state
 #[derive(Clone)]
@@ -13,6 +16,7 @@ pub struct AppState {
     pub auth: AuthService,
     pub activity_repo: ActivityRepository,
     pub route_repo: RouteRepository,
+    pub social: SocialRepository,
 }
 
 #[tokio::main]
@@ -41,21 +45,48 @@ async fn main() -> anyhow::Result<()> {
     let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-in-production".to_string());
     let auth_service = AuthService::new(user_repo, jwt_secret);
 
+    // Social repository
+    let social = SocialRepository::new(pool.clone());
+
     // Combined state
     let state = AppState {
         auth: auth_service,
         activity_repo,
         route_repo,
+        social,
     };
 
     // Build router
     let app = Router::new()
+        // Health
         .route("/health", get(health))
+        // Auth
         .route("/api/auth/register", post(auth::register))
         .route("/api/auth/login", post(auth::login))
         .route("/api/users/me", get(auth::get_current_user))
-        .route("/api/import/gpx", post(import::import_gpx))
+        // Activities CRUD
+        .route("/api/activities", post(activities::create_activity))
+        .route("/api/activities", get(activities::list_activities))
+        .route("/api/activities/:id", get(activities::get_activity))
+        .route("/api/activities/:id", delete(activities::delete_activity))
         .route("/api/activities/:id/geojson", get(geojson::get_activity_geojson))
+        // Social
+        .route("/api/users/:id/follow", post(social::follow_user))
+        .route("/api/users/:id/follow", delete(social::unfollow_user))
+        .route("/api/users/:id/followers", get(social::get_followers))
+        .route("/api/users/:id/following", get(social::get_following))
+        .route("/api/activities/:id/like", post(social::like_activity))
+        .route("/api/activities/:id/like", delete(social::unlike_activity))
+        .route("/api/activities/:id/comments", get(social::get_comments))
+        .route("/api/activities/:id/comments", post(social::add_comment))
+        .route("/api/comments/:id", delete(social::delete_comment))
+        // Feed
+        .route("/api/feed", get(feed::personal_feed))
+        .route("/api/feed/public", get(feed::public_feed))
+        // Import
+        .route("/api/import/gpx", post(import::import_gpx))
+        .route("/api/import/tcx", post(import::import_tcx))
+        .route("/api/import/strava", post(import::import_strava))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 

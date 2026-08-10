@@ -9,24 +9,22 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: Build Rust backend
-FROM rust:latest as backend-builder
-
+# Stage 2: Build Rust backend with cargo-chef
+FROM rust:latest as chef
 WORKDIR /app
+RUN cargo install cargo-chef --locked
 
-# Cache dependencies
-COPY Cargo.toml Cargo.lock ./
-COPY crates/*/Cargo.toml crates/
-RUN mkdir -p crates/*/src && \
-    for crate in crates/*/; do touch "$crate/src/lib.rs"; done
-
-# Build dependencies (cached)
-RUN cargo build --release || true
-
-# Copy source
+FROM chef AS planner
 COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Build application (binary is in crates/api)
+FROM chef AS builder
+# Build dependencies (this layer is cached!)
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# Build application
+COPY . .
 RUN cargo build --release -p lievre-api
 
 # Stage 3: Runtime
@@ -37,7 +35,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy backend binary
-COPY --from=backend-builder /app/target/release/lievre /usr/local/bin/
+COPY --from=builder /app/target/release/lievre /usr/local/bin/
 
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist /app/static

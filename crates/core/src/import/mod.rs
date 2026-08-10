@@ -7,3 +7,4 @@ pub mod strava;
 pub use gpx::GpxParser;
 pub use fit::FitParser;
 pub use tcx::TcxParser;
+pub use strava::StravaParser;
