@@ -909,13 +909,13 @@ CREATE TABLE jobs (
 **Target:** 3 months
 
 Epics included:
-- ✅ Epic 1: Foundation
-- ✅ Epic 2: File Import (GPX only)
-- ✅ Epic 3: Activity Processing
-- ✅ Epic 4: Maps (basic)
-- ✅ Epic 5: Social (follow, like, feed)
-- ✅ Epic 6: Federation (basic)
-- ✅ Epic 7: PWA (basic)
+- ✅ Epic 1: Foundation (COMPLETE)
+- ⏳ Epic 2: File Import (GPX only)
+- ⏳ Epic 3: Activity Processing
+- ⏳ Epic 4: Maps (basic)
+- ⏳ Epic 5: Social (follow, like, feed)
+- ⏳ Epic 6: Federation (basic)
+- ⏳ Epic 7: PWA (basic)
 
 ### Beta (v0.2.0)
 **Target:** 6 months
