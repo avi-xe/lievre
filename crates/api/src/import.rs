@@ -18,9 +18,11 @@ pub struct ImportError {
 }
 
 pub async fn import_gpx(
-    State((activity_repo, route_repo)): State<(ActivityRepository, RouteRepository)>,
+    State(state): State<crate::AppState>,
     mut multipart: Multipart,
 ) -> Result<Json<ImportResponse>, Error> {
+    let activity_repo = &state.activity_repo;
+    let route_repo = &state.route_repo;
     let parser = GpxParser::new();
     
     while let Some(field) = multipart.next_field().await.map_err(|e| Error::BadRequest(e.to_string()))? {

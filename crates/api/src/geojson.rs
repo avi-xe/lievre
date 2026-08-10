@@ -2,9 +2,10 @@ use axum::{extract::{Path, State}, http::StatusCode, Json};
 use lievre_core::RouteRepository;
 
 pub async fn get_activity_geojson(
-    State((_activity_repo, route_repo)): State<(lievre_core::ActivityRepository, RouteRepository)>,
+    State(state): State<crate::AppState>,
     Path(activity_id): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let route_repo = &state.route_repo;
     let route = route_repo
         .find_by_activity_id(&activity_id)
         .await

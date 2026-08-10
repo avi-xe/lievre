@@ -26,8 +26,8 @@ RUN cargo build --release || true
 # Copy source
 COPY . .
 
-# Build application
-RUN cargo build --release
+# Build application (binary is in crates/api)
+RUN cargo build --release -p lievre-api
 
 # Stage 3: Runtime
 FROM debian:bookworm-slim

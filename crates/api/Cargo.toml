@@ -28,3 +28,4 @@ anyhow.workspace = true
 jsonwebtoken.workspace = true
 argon2.workspace = true
 validator.workspace = true
+http = "1"

@@ -1,10 +1,19 @@
+mod auth;
 mod geojson;
 mod import;
 
 use axum::{routing::{get, post}, Router};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use lievre_core::{ActivityRepository, RouteRepository};
+use lievre_core::{ActivityRepository, AuthService, RouteRepository, UserRepository};
+
+/// Combined application state
+#[derive(Clone)]
+pub struct AppState {
+    pub auth: AuthService,
+    pub activity_repo: ActivityRepository,
+    pub route_repo: RouteRepository,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -26,14 +35,29 @@ async fn main() -> anyhow::Result<()> {
     // Initialize repositories
     let activity_repo = ActivityRepository::new(pool.clone());
     let route_repo = RouteRepository::new(pool.clone());
+    let user_repo = UserRepository::new(pool.clone());
+
+    // Initialize auth service
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-in-production".to_string());
+    let auth_service = AuthService::new(user_repo, jwt_secret);
+
+    // Combined state
+    let state = AppState {
+        auth: auth_service,
+        activity_repo,
+        route_repo,
+    };
 
     // Build router
     let app = Router::new()
         .route("/health", get(health))
+        .route("/api/auth/register", post(auth::register))
+        .route("/api/auth/login", post(auth::login))
+        .route("/api/users/me", get(auth::get_current_user))
         .route("/api/import/gpx", post(import::import_gpx))
         .route("/api/activities/:id/geojson", get(geojson::get_activity_geojson))
         .layer(TraceLayer::new_for_http())
-        .with_state((activity_repo, route_repo));
+        .with_state(state);
 
     // Start server
     let addr = std::env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
