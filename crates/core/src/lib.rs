@@ -4,7 +4,7 @@ pub mod import;
 pub mod route;
 pub mod user;
 
-pub use activity::{Activity, ActivityType, Visibility};
+pub use activity::{Activity, ActivityType, ActivityRepository, CreateActivity, UpdateActivity, Visibility};
 pub use auth::{AuthService, Claims};
 pub use import::gpx::GpxParser;
 pub use route::{CreateRoute, Route, RouteRepository};
