@@ -1,0 +1,15 @@
+[package]
+name = "lievre-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+lievre-shared = { path = "../shared" }
+
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
