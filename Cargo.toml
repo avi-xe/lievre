@@ -55,3 +55,6 @@ validator = { version = "0.18", features = ["derive"] }
 
 # XML parsing
 quick-xml = { version = "0.31", features = ["serialize"] }
+
+# FIT file parsing
+fitparser = "0.11"
