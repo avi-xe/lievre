@@ -1,3 +1,4 @@
+mod geojson;
 mod import;
 
 use axum::{routing::{get, post}, Router};
@@ -30,6 +31,7 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/api/import/gpx", post(import::import_gpx))
+        .route("/api/activities/:id/geojson", get(geojson::get_activity_geojson))
         .layer(TraceLayer::new_for_http())
         .with_state((activity_repo, route_repo));
 
