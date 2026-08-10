@@ -1052,7 +1052,7 @@ cargo run -- migrate
 |----------|---------|
 | [GLOSSARY.md](GLOSSARY.md) | Ubiquitous language and domain terms |
 | [BACKLOG.md](BACKLOG.md) | Detailed user stories and milestones |
-| [FAQ.md](FAQ.md) | User-facing FAQs and API reference |
+| [README.md](README.md) | Getting started, API reference, troubleshooting |
 
 ---
 
