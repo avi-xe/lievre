@@ -2,7 +2,7 @@
 
 This document describes the current architecture using the [C4 model](https://c4model.com/) — four levels of abstraction for software architecture.
 
-**Current State:** Epic 1 (Foundation) + Epic 2 (File Import) + Epic 3 (Activity Processing) + Epic 4 (Maps & Visualization) complete.
+**Current State:** Epic 1-5 complete (Foundation, File Import, Activity Processing, Maps & Visualization, Social Features).
 
 ---
 
@@ -301,19 +301,20 @@ impl GpxParser {
 
 ## What's Built vs. What's Planned
 
-### ✅ Built (Epic 1 + 2 + 3 + 4)
+### ✅ Built (Epic 1-5)
 
 | Layer | Status | Components |
 |-------|--------|------------|
-| Database | ✅ SQLite | Pool, migrations, CRUD tables, jobs, stats |
+| Database | ✅ SQLite | Pool, migrations, CRUD, jobs, stats, social |
 | Auth | ✅ Local | Register, login, JWT |
 | Activities | ✅ CRUD | Create, read, delete |
 | Routes | ✅ Storage | GeoJSON, coordinates |
 | Import | ✅ Multi-format | GPX, FIT, TCX, ZIP, Strava CSV |
 | Processing | ✅ Background | Job queue with retry, stats computation |
+| Social | ✅ Features | Follow, like, comment, feed |
 | Visualization | ✅ Frontend | React app, Leaflet maps, elevation charts |
 | Privacy | ✅ Zones | Blur start/end points, Haversine distance |
-| API | ✅ REST | Health, import, GeoJSON endpoint |
+| API | ✅ REST | Health, import, GeoJSON, social endpoints |
 
 ### 🔨 Not Yet Built
 
@@ -343,7 +344,7 @@ graph LR
     style B fill:#90EE90
     style C fill:#90EE90
     style D fill:#90EE90
-    style E fill:#FFD700
+    style E fill:#90EE90
     style F fill:#FFD700
     style G fill:#FFD700
 ```
@@ -354,7 +355,7 @@ graph LR
 | **2** ✅ | File Import | GPX/FIT/TCX parsers, batch import |
 | **3** ✅ | Activity Processing | Stats computation, job queue, GeoJSON |
 | **4** ✅ | Maps & Visualization | Leaflet maps, elevation charts, privacy zones |
-| **5** | Social Features | Follow, like, comment, feed |
+| **5** ✅ | Social Features | Follow, like, comment, feed |
 | **6** | Federation | ActivityPub, WebFinger, federation with Mastodon |
 | **7** | Frontend PWA | React app, offline support |
 
