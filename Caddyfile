@@ -1,3 +1,16 @@
-:3000 {
-    reverse_proxy app:3000
+:80 {
+    # Proxy known backend routes
+    handle /api/* {
+        reverse_proxy app:3000
+    }
+    handle /health {
+        reverse_proxy app:3000
+    }
+
+    # Serve frontend — if file doesn't exist, serve index.html (SPA)
+    handle {
+        root * /app/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
 }

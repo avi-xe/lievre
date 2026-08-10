@@ -1,4 +1,16 @@
-FROM rust:latest as builder
+# Stage 1: Build frontend
+FROM node:20-alpine as frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Build Rust backend
+FROM rust:latest as backend-builder
 
 WORKDIR /app
 
@@ -17,14 +29,18 @@ COPY . .
 # Build application
 RUN cargo build --release
 
-# Runtime
+# Stage 3: Runtime
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/lievre /usr/local/bin/
+# Copy backend binary
+COPY --from=backend-builder /app/target/release/lievre /usr/local/bin/
+
+# Copy frontend build
+COPY --from=frontend-builder /app/frontend/dist /app/static
 
 RUN mkdir -p /app/data
 
