@@ -1,10 +1,11 @@
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     Json,
 };
 use lievre_federation::webfinger::WebfingerQuery;
 use lievre_federation::{Person, WebfingerResponse};
+
 use serde_json::json;
 
 use crate::AppState;
@@ -207,4 +208,196 @@ pub async fn outbox(
     });
 
     Ok(Json(outbox))
+}
+
+/// Inbox endpoint
+/// POST /users/:username/inbox
+pub async fn inbox(
+    Path(username): Path<String>,
+    State(state): State<AppState>,
+    _headers: HeaderMap,
+    Json(activity): Json<serde_json::Value>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let db = &state.fed_db;
+
+    // Check if user exists
+    let user = sqlx::query_as::<_, lievre_core::user::User>(
+        "SELECT * FROM users WHERE username = ? AND is_local = 1",
+    )
+    .bind(&username)
+    .fetch_optional(&db.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if user.is_none() {
+        return Err((StatusCode::NOT_FOUND, "User not found".to_string()));
+    }
+
+    // Get the activity type
+    let activity_type = activity.get("type").and_then(|t| t.as_str()).unwrap_or("");
+
+    tracing::info!("Received {} activity for user {}", activity_type, username);
+
+    // Handle different activity types
+    match activity_type {
+        "Follow" => {
+            // Store the follow request
+            let follower_url = activity.get("actor").and_then(|a| a.as_str()).unwrap_or("");
+            let follow_id = activity.get("id").and_then(|i| i.as_str()).unwrap_or("");
+
+            if !follower_url.is_empty() {
+                sqlx::query(
+                    "INSERT OR IGNORE INTO actor_follows (id, follower_actor_url, following_actor_url, status)
+                     VALUES (?, ?, ?, 'pending')",
+                )
+                .bind(follow_id)
+                .bind(follower_url)
+                .bind(db.actor_url(&username).to_string())
+                .execute(&db.pool)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                tracing::info!("Stored follow request from {}", follower_url);
+            }
+
+            // In a real implementation, we would send an Accept activity back
+            // For now, just accept automatically
+            Ok(StatusCode::ACCEPTED)
+        }
+        "Accept" => {
+            // Handle accept of our follow request
+            let object = activity.get("object").cloned().unwrap_or(json!({}));
+            if let Some(actor) = object.get("actor").and_then(|a| a.as_str()) {
+                tracing::info!("Follow accepted by {}", actor);
+            }
+            Ok(StatusCode::ACCEPTED)
+        }
+        "Undo" => {
+            // Handle undo (e.g., unfollow)
+            let object = activity.get("object").cloned().unwrap_or(json!({}));
+            if object.get("type").and_then(|t| t.as_str()) == Some("Follow") {
+                let follower_url = object.get("actor").and_then(|a| a.as_str()).unwrap_or("");
+
+                if !follower_url.is_empty() {
+                    sqlx::query(
+                        "DELETE FROM actor_follows WHERE follower_actor_url = ? AND following_actor_url = ?",
+                    )
+                    .bind(follower_url)
+                    .bind(db.actor_url(&username).to_string())
+                    .execute(&db.pool)
+                    .await
+                    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    tracing::info!("Removed follow from {}", follower_url);
+                }
+            }
+            Ok(StatusCode::ACCEPTED)
+        }
+        "Create" => {
+            // Handle create activity (e.g., new exercise)
+            let object = activity.get("object").cloned().unwrap_or(json!({}));
+
+            // Store the exercise if it's an Exercise type
+            if object.get("type").and_then(|t| t.as_str()) == Some("Exercise") {
+                let exercise_id = uuid::Uuid::new_v4().to_string();
+                let exercise_url = object.get("id").and_then(|i| i.as_str()).unwrap_or("");
+                let attributed_to = object
+                    .get("attributedTo")
+                    .and_then(|a| a.as_str())
+                    .unwrap_or("");
+                let activity_type = object
+                    .get("activityType")
+                    .and_then(|a| a.as_str())
+                    .unwrap_or("workout");
+                let started_at = object
+                    .get("startedAt")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("");
+                let name = object.get("name").and_then(|n| n.as_str()).unwrap_or("");
+                let content = object.get("content").and_then(|c| c.as_str()).unwrap_or("");
+                let route_url = object
+                    .get("routeUrl")
+                    .and_then(|r| r.as_str())
+                    .unwrap_or("");
+                let stats_url = object
+                    .get("statsUrl")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("");
+                let published = object
+                    .get("published")
+                    .and_then(|p| p.as_str())
+                    .unwrap_or("");
+
+                // Find or create remote user
+                let remote_user = sqlx::query_as::<_, lievre_core::user::User>(
+                    "SELECT * FROM users WHERE actor_url = ?",
+                )
+                .bind(attributed_to)
+                .fetch_optional(&db.pool)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                let user_id = if let Some(u) = remote_user {
+                    u.id
+                } else {
+                    // Create a remote user
+                    let new_id = uuid::Uuid::new_v4().to_string();
+                    let remote_username = attributed_to.split('/').last().unwrap_or("remote");
+                    let remote_domain = attributed_to.split("://").nth(1).unwrap_or("unknown");
+
+                    let email = format!("{}@{}", remote_username, remote_domain);
+
+                    sqlx::query(
+                        "INSERT INTO users (id, email, username, password_hash, actor_url, is_local)
+                         VALUES (?, ?, ?, '', ?, 0)",
+                    )
+                    .bind(&new_id)
+                    .bind(&email)
+                    .bind(remote_username)
+                    .bind(attributed_to)
+                    .execute(&db.pool)
+                    .await
+                    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    new_id
+                };
+
+                // Store the exercise
+                sqlx::query(
+                    "INSERT INTO exercises (id, user_id, actor_url, exercise_url, activity_type, started_at, name, content, route_url, stats_url, published_at, is_local)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+                )
+                .bind(&exercise_id)
+                .bind(&user_id)
+                .bind(attributed_to)
+                .bind(exercise_url)
+                .bind(activity_type)
+                .bind(started_at)
+                .bind(name)
+                .bind(content)
+                .bind(route_url)
+                .bind(stats_url)
+                .bind(published)
+                .execute(&db.pool)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                tracing::info!("Stored remote exercise {}", exercise_url);
+            }
+
+            Ok(StatusCode::ACCEPTED)
+        }
+        "Update" | "Delete" => {
+            // Handle update/delete activities
+            tracing::info!(
+                "Received {} activity (handling not yet implemented)",
+                activity_type
+            );
+            Ok(StatusCode::ACCEPTED)
+        }
+        _ => {
+            tracing::warn!("Unknown activity type: {}", activity_type);
+            Ok(StatusCode::ACCEPTED)
+        }
+    }
 }
