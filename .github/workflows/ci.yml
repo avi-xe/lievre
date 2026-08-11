@@ -15,10 +15,12 @@ jobs:
     name: Lint
     runs-on: self-hosted
     steps:
-      - name: Clean workspace
-        run: git clean -fdx data/ || true
-
       - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Clean data directory
+        run: rm -rf data/ || true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -39,10 +41,12 @@ jobs:
     runs-on: self-hosted
     needs: lint
     steps:
-      - name: Clean workspace
-        run: git clean -fdx data/ || true
-
       - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: Clean data directory
+        run: rm -rf data/ || true
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
