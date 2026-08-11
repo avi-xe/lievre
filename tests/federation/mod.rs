@@ -11,12 +11,12 @@ use serde_json::Value;
 async fn test_webfinger_discovery() {
     let client = Client::new();
     let suffix = format!("fed01_{}", test_id());
-    let (_, _, email, _) = register_user(&client, &suffix).await;
+    let (_, _, _, username) = register_user(&client, &suffix).await;
 
     let resp = client
         .get(format!(
             "{}/.well-known/webfinger?resource=acct:{}@localhost",
-            BASE_URL, email
+            BASE_URL, username
         ))
         .send()
         .await
@@ -24,7 +24,7 @@ async fn test_webfinger_discovery() {
 
     assert_eq!(resp.status(), 200);
     let body: Value = resp.json().await.unwrap();
-    assert_eq!(body["subject"], format!("acct:{}@localhost", email));
+    assert_eq!(body["subject"], format!("acct:{}@localhost", username));
     assert!(body["links"].is_array());
     let links = body["links"].as_array().unwrap();
     assert!(!links.is_empty());

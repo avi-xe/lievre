@@ -79,8 +79,8 @@ pub async fn exercise_stats(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let db = &state.fed_db;
 
-    // Look up the exercise
-    let exercise = sqlx::query_as::<_, lievre_core::activity::Activity>(
+    // Try exercises table first, fall back to direct activity lookup
+    let activity = sqlx::query_as::<_, lievre_core::activity::Activity>(
         "SELECT a.* FROM exercises e JOIN activities a ON e.activity_id = a.id WHERE e.id = ?",
     )
     .bind(&exercise_id)
@@ -88,7 +88,18 @@ pub async fn exercise_stats(
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
-    match exercise {
+    let activity = match activity {
+        Some(a) => Some(a),
+        None => sqlx::query_as::<_, lievre_core::activity::Activity>(
+            "SELECT * FROM activities WHERE id = ?",
+        )
+        .bind(&exercise_id)
+        .fetch_optional(&db.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
+    };
+
+    match activity {
         Some(activity) => {
             let stats = json!({
                 "distance": activity.distance_meters,
@@ -109,7 +120,7 @@ pub async fn exercise_route(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let db = &state.fed_db;
 
-    // Look up the route for this exercise
+    // Try exercises table first, fall back to direct activity lookup
     let route = sqlx::query_as::<_, lievre_core::route::Route>(
         "SELECT r.* FROM routes r JOIN exercises e ON r.activity_id = e.activity_id WHERE e.id = ?",
     )
@@ -117,6 +128,17 @@ pub async fn exercise_route(
     .fetch_optional(&db.pool)
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let route = match route {
+        Some(r) => Some(r),
+        None => sqlx::query_as::<_, lievre_core::route::Route>(
+            "SELECT * FROM routes WHERE activity_id = ?",
+        )
+        .bind(&exercise_id)
+        .fetch_optional(&db.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?,
+    };
 
     match route {
         Some(route) => {
