@@ -1,7 +1,11 @@
 name: CI
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:  # Manual trigger
 
 env:
   CARGO_TERM_COLOR: always
