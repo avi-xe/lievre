@@ -1,0 +1,22 @@
+FROM rust:latest
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy manifests first for dependency caching
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+
+# Build in debug mode (fast incremental builds)
+RUN cargo build -p lievre-api
+
+RUN mkdir -p /app/data
+
+EXPOSE 3000
+
+CMD ["lievre"]
