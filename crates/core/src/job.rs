@@ -42,6 +42,7 @@ pub enum JobType {
     ProcessTcx { activity_id: String },
     ComputeStats { activity_id: String },
     GenerateGeoJson { activity_id: String },
+    FederationDeliver,
 }
 
 impl std::fmt::Display for JobType {
@@ -54,6 +55,7 @@ impl std::fmt::Display for JobType {
             JobType::GenerateGeoJson { activity_id } => {
                 write!(f, "generate_geojson:{}", activity_id)
             }
+            JobType::FederationDeliver => write!(f, "federation_deliver"),
         }
     }
 }
@@ -63,17 +65,28 @@ impl std::str::FromStr for JobType {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.splitn(2, ':').collect();
-        if parts.len() != 2 {
-            return Err(anyhow::anyhow!("Invalid job type format: {}", s));
-        }
-
-        let activity_id = parts[1].to_string();
         match parts[0] {
-            "process_gpx" => Ok(JobType::ProcessGpx { activity_id }),
-            "process_fit" => Ok(JobType::ProcessFit { activity_id }),
-            "process_tcx" => Ok(JobType::ProcessTcx { activity_id }),
-            "compute_stats" => Ok(JobType::ComputeStats { activity_id }),
-            "generate_geojson" => Ok(JobType::GenerateGeoJson { activity_id }),
+            "process_gpx" => {
+                let activity_id = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
+                Ok(JobType::ProcessGpx { activity_id })
+            }
+            "process_fit" => {
+                let activity_id = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
+                Ok(JobType::ProcessFit { activity_id })
+            }
+            "process_tcx" => {
+                let activity_id = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
+                Ok(JobType::ProcessTcx { activity_id })
+            }
+            "compute_stats" => {
+                let activity_id = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
+                Ok(JobType::ComputeStats { activity_id })
+            }
+            "generate_geojson" => {
+                let activity_id = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
+                Ok(JobType::GenerateGeoJson { activity_id })
+            }
+            "federation_deliver" => Ok(JobType::FederationDeliver),
             _ => Err(anyhow::anyhow!("Unknown job type: {}", parts[0])),
         }
     }
