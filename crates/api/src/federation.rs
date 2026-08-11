@@ -101,6 +101,36 @@ pub async fn exercise_stats(
     }
 }
 
+/// Exercise route endpoint (GeoJSON)
+/// GET /api/exercises/:id/route
+pub async fn exercise_route(
+    Path(exercise_id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let db = &state.fed_db;
+
+    // Look up the route for this exercise
+    let route = sqlx::query_as::<_, lievre_core::route::Route>(
+        "SELECT r.* FROM routes r JOIN exercises e ON r.activity_id = e.activity_id WHERE e.id = ?",
+    )
+    .bind(&exercise_id)
+    .fetch_optional(&db.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    match route {
+        Some(route) => {
+            let geojson = state
+                .route_repo
+                .to_geojson(&route)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+            Ok(Json(geojson))
+        }
+        None => Err((StatusCode::NOT_FOUND, "Route not found".to_string())),
+    }
+}
+
 /// Outbox endpoint
 /// GET /users/:username/outbox or /users/:username/outbox?page=1
 pub async fn outbox(

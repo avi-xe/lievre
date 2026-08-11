@@ -109,6 +109,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/users/:username", get(federation::actor))
         .route("/users/:username/inbox", post(federation::inbox))
         .route("/users/:username/outbox", get(federation::outbox))
+        .route("/api/exercises/:id/route", get(federation::exercise_route))
         .route("/api/exercises/:id/stats", get(federation::exercise_stats))
         // Import
         .route("/api/import/gpx", post(import::import_gpx))
