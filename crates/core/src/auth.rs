@@ -26,7 +26,7 @@ impl AuthService {
 
     pub async fn register(&self, user: LoginUser, password: &str) -> anyhow::Result<User> {
         // Check if user exists
-        if let Some(_) = self.user_repo.find_by_email(&user.email).await? {
+        if self.user_repo.find_by_email(&user.email).await?.is_some() {
             anyhow::bail!("User with this email already exists");
         }
 

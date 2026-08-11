@@ -172,7 +172,7 @@ async fn test_like_count() {
         .send()
         .await
         .unwrap();
-    let body: Value = resp.json().await.unwrap();
+    let _body: Value = resp.json().await.unwrap();
     // like_count may or may not be in response depending on implementation
     // At minimum, the like should not error
 

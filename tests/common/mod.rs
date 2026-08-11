@@ -46,6 +46,7 @@ pub async fn register_user(client: &Client, suffix: &str) -> (String, String, St
 }
 
 /// Login and return token
+#[allow(dead_code)]
 pub async fn login_user(client: &Client, email: &str, password: &str) -> String {
     let resp = client
         .post(format!("{}/api/auth/login", BASE_URL))

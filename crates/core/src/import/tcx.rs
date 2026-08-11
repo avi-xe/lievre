@@ -67,36 +67,12 @@ impl TcxParser {
                 Ok(Event::Start(e)) => match e.name().as_ref() {
                     b"Lap" => in_lap = true,
                     b"Trackpoint" => in_trackpoint = true,
-                    b"Time" => {
-                        if in_trackpoint {
-                            in_time = true;
-                        }
-                    }
-                    b"DistanceMeters" => {
-                        if in_lap {
-                            in_distance = true;
-                        }
-                    }
-                    b"AltitudeMeters" => {
-                        if in_trackpoint {
-                            in_altitude = true;
-                        }
-                    }
-                    b"Heartratebpm" => {
-                        if in_trackpoint {
-                            in_heartrate = true;
-                        }
-                    }
-                    b"Calories" => {
-                        if in_lap {
-                            in_calories = true;
-                        }
-                    }
-                    b"TotalTimeSeconds" => {
-                        if in_lap {
-                            in_totaltime = true;
-                        }
-                    }
+                    b"Time" if in_trackpoint => in_time = true,
+                    b"DistanceMeters" if in_lap => in_distance = true,
+                    b"AltitudeMeters" if in_trackpoint => in_altitude = true,
+                    b"Heartratebpm" if in_trackpoint => in_heartrate = true,
+                    b"Calories" if in_lap => in_calories = true,
+                    b"TotalTimeSeconds" if in_lap => in_totaltime = true,
                     _ => {}
                 },
                 Ok(Event::Text(e)) => {
