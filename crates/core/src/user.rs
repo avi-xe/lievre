@@ -115,6 +115,34 @@ impl UserRepository {
 
         Ok(user)
     }
+
+    /// Update federation fields for a user
+    pub async fn update_federation(
+        &self,
+        id: &str,
+        public_key: &str,
+        private_key: &str,
+        actor_url: &str,
+        inbox_url: &str,
+        outbox_url: &str,
+    ) -> anyhow::Result<User> {
+        let user = sqlx::query_as::<_, User>(
+            r#"UPDATE users
+               SET public_key = ?, private_key = ?, actor_url = ?, inbox_url = ?, outbox_url = ?, is_local = 1
+               WHERE id = ?
+               RETURNING *"#,
+        )
+        .bind(public_key)
+        .bind(private_key)
+        .bind(actor_url)
+        .bind(inbox_url)
+        .bind(outbox_url)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
 }
 
 #[cfg(test)]

@@ -18,6 +18,10 @@ anyhow = "1"
 activitypub_federation = { version = "0.6", default-features = false, features = ["axum"] }
 activitystreams-kinds = "0.3"
 reqwest = { version = "0.12", features = ["json"] }
+rsa = "0.9"
+rand = "0.8"
+pkcs8 = "0.10"
+pem-rfc7468 = "0.7"
 tokio = { workspace = true }
 axum = { workspace = true }
 sqlx.workspace = true

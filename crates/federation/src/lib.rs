@@ -1,6 +1,7 @@
 pub mod activity;
 pub mod config;
 pub mod exercise;
+pub mod keys;
 pub mod person;
 pub mod webfinger;
 
