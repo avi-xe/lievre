@@ -99,3 +99,112 @@ pub async fn exercise_stats(
         None => Err((StatusCode::NOT_FOUND, "Exercise not found".to_string())),
     }
 }
+
+/// Outbox endpoint
+/// GET /users/:username/outbox or /users/:username/outbox?page=1
+pub async fn outbox(
+    Path(username): Path<String>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let db = &state.fed_db;
+
+    // Check if user exists
+    let user = sqlx::query_as::<_, lievre_core::user::User>(
+        "SELECT * FROM users WHERE username = ? AND is_local = 1",
+    )
+    .bind(&username)
+    .fetch_optional(&db.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let user = match user {
+        Some(u) => u,
+        None => {
+            return Err((StatusCode::NOT_FOUND, "User not found".to_string()));
+        }
+    };
+
+    let outbox_url = db.outbox_url(&user.username);
+    let actor_url = db.actor_url(&user.username);
+
+    // Count public activities
+    let count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM activities WHERE user_id = ? AND visibility = 'public'",
+    )
+    .bind(&user.id)
+    .fetch_one(&db.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // If page parameter is provided, return the page
+    if let Some(page_str) = params.get("page") {
+        let page = page_str.parse::<i64>().unwrap_or(1);
+        let limit = 20;
+        let offset = (page - 1) * limit;
+
+        // Get public activities
+        let activities = sqlx::query_as::<_, lievre_core::activity::Activity>(
+            "SELECT * FROM activities WHERE user_id = ? AND visibility = 'public' ORDER BY started_at DESC LIMIT ? OFFSET ?",
+        )
+        .bind(&user.id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&db.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+        // Convert to ActivityStreams Create activities
+        let items: Vec<serde_json::Value> = activities
+            .iter()
+            .map(|a| {
+                let exercise_url = db.exercise_url(&a.id);
+                json!({
+                    "@context": "https://www.w3.org/ns/activitystreams",
+                    "type": "Create",
+                    "id": format!("{}/create", exercise_url),
+                    "actor": actor_url,
+                    "object": {
+                        "@context": [
+                            "https://www.w3.org/ns/activitystreams",
+                            "https://fedisport.github.io/vocabulary/context.jsonld"
+                        ],
+                        "type": "Exercise",
+                        "id": exercise_url,
+                        "attributedTo": actor_url,
+                        "activityType": a.activity_type,
+                        "startedAt": a.started_at.to_rfc3339(),
+                        "name": a.title,
+                        "routeUrl": db.route_url(&a.id),
+                        "statsUrl": db.stats_url(&a.id),
+                        "published": a.created_at.to_rfc3339(),
+                        "to": ["https://www.w3.org/ns/activitystreams#Public"],
+                        "cc": [format!("{}/followers", actor_url)],
+                    }
+                })
+            })
+            .collect();
+
+        let page_data = json!({
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "type": "OrderedCollectionPage",
+            "id": format!("{}?page={}", outbox_url, page),
+            "partOf": outbox_url,
+            "totalItems": count,
+            "orderedItems": items,
+        });
+
+        return Ok(Json(page_data));
+    }
+
+    // Otherwise return the collection metadata
+    let outbox = json!({
+        "@context": "https://www.w3.org/ns/activitystreams",
+        "type": "OrderedCollection",
+        "id": outbox_url,
+        "totalItems": count,
+        "first": format!("{}?page=1", outbox_url),
+    });
+
+    Ok(Json(outbox))
+}

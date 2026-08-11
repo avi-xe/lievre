@@ -107,6 +107,7 @@ async fn main() -> anyhow::Result<()> {
         // Federation
         .route("/.well-known/webfinger", get(federation::webfinger))
         .route("/users/:username", get(federation::actor))
+        .route("/users/:username/outbox", get(federation::outbox))
         .route("/api/exercises/:id/stats", get(federation::exercise_stats))
         // Import
         .route("/api/import/gpx", post(import::import_gpx))
