@@ -1345,6 +1345,7 @@ dependencies = [
 name = "lievre-api"
 version = "0.1.0"
 dependencies = [
+ "activitypub_federation",
  "anyhow",
  "argon2",
  "axum",
@@ -1353,6 +1354,7 @@ dependencies = [
  "http",
  "jsonwebtoken",
  "lievre-core",
+ "lievre-federation",
  "lievre-shared",
  "serde",
  "serde_json",

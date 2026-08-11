@@ -118,7 +118,14 @@ mod tests {
                 display_name TEXT,
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                updated_at TEXT DEFAULT (datetime('now'))
+                updated_at TEXT DEFAULT (datetime('now')),
+                public_key TEXT,
+                private_key TEXT,
+                inbox_url TEXT,
+                outbox_url TEXT,
+                actor_url TEXT,
+                is_local BOOLEAN DEFAULT 1,
+                last_refreshed_at TEXT
             )"#,
         )
         .execute(&pool)

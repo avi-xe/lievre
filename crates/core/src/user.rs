@@ -12,6 +12,14 @@ pub struct User {
     pub avatar_url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // Federation fields
+    pub public_key: Option<String>,
+    pub private_key: Option<String>,
+    pub inbox_url: Option<String>,
+    pub outbox_url: Option<String>,
+    pub actor_url: Option<String>,
+    pub is_local: Option<bool>,
+    pub last_refreshed_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -124,7 +132,14 @@ mod tests {
                 display_name TEXT,
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                updated_at TEXT DEFAULT (datetime('now'))
+                updated_at TEXT DEFAULT (datetime('now')),
+                public_key TEXT,
+                private_key TEXT,
+                inbox_url TEXT,
+                outbox_url TEXT,
+                actor_url TEXT,
+                is_local BOOLEAN DEFAULT 1,
+                last_refreshed_at TEXT
             )"#,
         )
         .execute(&pool)
@@ -202,6 +217,13 @@ mod tests {
             avatar_url: Some("https://example.com/avatar.jpg".to_string()),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            public_key: None,
+            private_key: None,
+            inbox_url: None,
+            outbox_url: None,
+            actor_url: None,
+            is_local: Some(true),
+            last_refreshed_at: None,
         };
 
         let response = UserResponse::from(user.clone());

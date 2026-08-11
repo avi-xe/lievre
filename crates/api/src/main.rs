@@ -1,5 +1,6 @@
 mod activities;
 mod auth;
+mod federation;
 mod feed;
 mod geojson;
 mod import;
@@ -12,6 +13,7 @@ use axum::{
 use lievre_core::{
     ActivityRepository, AuthService, RouteRepository, SocialRepository, UserRepository,
 };
+use lievre_federation::config::FederationDb;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -22,6 +24,7 @@ pub struct AppState {
     pub activity_repo: ActivityRepository,
     pub route_repo: RouteRepository,
     pub social: SocialRepository,
+    pub fed_db: FederationDb,
 }
 
 #[tokio::main]
@@ -57,12 +60,18 @@ async fn main() -> anyhow::Result<()> {
     // Social repository
     let social = SocialRepository::new(pool.clone());
 
+    // Federation database
+    let domain = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+    let scheme = std::env::var("SCHEME").unwrap_or_else(|_| "http".to_string());
+    let fed_db = FederationDb::new(pool.clone(), domain, scheme);
+
     // Combined state
     let state = AppState {
         auth: auth_service,
         activity_repo,
         route_repo,
         social,
+        fed_db,
     };
 
     // Build router
@@ -95,6 +104,10 @@ async fn main() -> anyhow::Result<()> {
         // Feed
         .route("/api/feed", get(feed::personal_feed))
         .route("/api/feed/public", get(feed::public_feed))
+        // Federation
+        .route("/.well-known/webfinger", get(federation::webfinger))
+        .route("/users/:username", get(federation::actor))
+        .route("/api/exercises/:id/stats", get(federation::exercise_stats))
         // Import
         .route("/api/import/gpx", post(import::import_gpx))
         .route("/api/import/tcx", post(import::import_tcx))
