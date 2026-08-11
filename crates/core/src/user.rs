@@ -12,6 +12,14 @@ pub struct User {
     pub avatar_url: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // Federation fields
+    pub public_key: Option<String>,
+    pub private_key: Option<String>,
+    pub inbox_url: Option<String>,
+    pub outbox_url: Option<String>,
+    pub actor_url: Option<String>,
+    pub is_local: Option<bool>,
+    pub last_refreshed_at: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -107,6 +115,34 @@ impl UserRepository {
 
         Ok(user)
     }
+
+    /// Update federation fields for a user
+    pub async fn update_federation(
+        &self,
+        id: &str,
+        public_key: &str,
+        private_key: &str,
+        actor_url: &str,
+        inbox_url: &str,
+        outbox_url: &str,
+    ) -> anyhow::Result<User> {
+        let user = sqlx::query_as::<_, User>(
+            r#"UPDATE users
+               SET public_key = ?, private_key = ?, actor_url = ?, inbox_url = ?, outbox_url = ?, is_local = 1
+               WHERE id = ?
+               RETURNING *"#,
+        )
+        .bind(public_key)
+        .bind(private_key)
+        .bind(actor_url)
+        .bind(inbox_url)
+        .bind(outbox_url)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(user)
+    }
 }
 
 #[cfg(test)]
@@ -124,7 +160,14 @@ mod tests {
                 display_name TEXT,
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                updated_at TEXT DEFAULT (datetime('now'))
+                updated_at TEXT DEFAULT (datetime('now')),
+                public_key TEXT,
+                private_key TEXT,
+                inbox_url TEXT,
+                outbox_url TEXT,
+                actor_url TEXT,
+                is_local BOOLEAN DEFAULT 1,
+                last_refreshed_at TEXT
             )"#,
         )
         .execute(&pool)
@@ -202,6 +245,13 @@ mod tests {
             avatar_url: Some("https://example.com/avatar.jpg".to_string()),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            public_key: None,
+            private_key: None,
+            inbox_url: None,
+            outbox_url: None,
+            actor_url: None,
+            is_local: Some(true),
+            last_refreshed_at: None,
         };
 
         let response = UserResponse::from(user.clone());

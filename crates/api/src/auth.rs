@@ -64,6 +64,28 @@ pub async fn register(
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
+    // Generate federation key pair
+    let keypair = lievre_federation::keys::generate_keypair()
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    let actor_url = state.fed_db.actor_url(&user.username);
+    let inbox_url = state.fed_db.inbox_url(&user.username);
+    let outbox_url = state.fed_db.outbox_url(&user.username);
+
+    // Update user with federation fields
+    let user_repo = state.auth.user_repo();
+    let user = user_repo
+        .update_federation(
+            &user.id,
+            &keypair.public_key_pem,
+            &keypair.private_key_pem,
+            actor_url.as_str(),
+            inbox_url.as_str(),
+            outbox_url.as_str(),
+        )
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
     let login_user = lievre_core::user::LoginUser {
         email: user.email.clone(),
         username: Some(user.username.clone()),

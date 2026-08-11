@@ -24,6 +24,11 @@ impl AuthService {
         }
     }
 
+    /// Get a reference to the user repository
+    pub fn user_repo(&self) -> &UserRepository {
+        &self.user_repo
+    }
+
     pub async fn register(&self, user: LoginUser, password: &str) -> anyhow::Result<User> {
         // Check if user exists
         if self.user_repo.find_by_email(&user.email).await?.is_some() {
@@ -118,7 +123,14 @@ mod tests {
                 display_name TEXT,
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                updated_at TEXT DEFAULT (datetime('now'))
+                updated_at TEXT DEFAULT (datetime('now')),
+                public_key TEXT,
+                private_key TEXT,
+                inbox_url TEXT,
+                outbox_url TEXT,
+                actor_url TEXT,
+                is_local BOOLEAN DEFAULT 1,
+                last_refreshed_at TEXT
             )"#,
         )
         .execute(&pool)

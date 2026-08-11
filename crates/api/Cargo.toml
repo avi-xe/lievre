@@ -11,6 +11,7 @@ path = "src/main.rs"
 [dependencies]
 lievre-core = { path = "../core" }
 lievre-shared = { path = "../shared" }
+lievre-federation = { path = "../federation" }
 
 tokio.workspace = true
 axum = { version = "0.7", features = ["macros", "multipart"] }
@@ -29,3 +30,4 @@ jsonwebtoken.workspace = true
 argon2.workspace = true
 validator.workspace = true
 http = "1"
+activitypub_federation = { version = "0.6", default-features = false }

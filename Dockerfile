@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM node:20-alpine as frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -10,7 +10,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Rust backend with cargo-chef
-FROM rust:latest as chef
+FROM rust:latest AS chef
 WORKDIR /app
 RUN cargo install cargo-chef --locked
 

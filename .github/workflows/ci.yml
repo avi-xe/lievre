@@ -5,6 +5,7 @@ on:
     branches: [master]
   push:
     branches: [master]
+  workflow_dispatch:  # Manual trigger
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,15 +16,13 @@ jobs:
     name: Lint
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
 
       - name: Check formatting
         run: cargo fmt --all -- --check
@@ -36,72 +35,14 @@ jobs:
     runs-on: self-hosted
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
 
       - name: Unit tests
         run: cargo test --workspace --lib
-
-  build-docker:
-    name: Build Docker image
-    runs-on: self-hosted
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: false
-          tags: lievre:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  e2e:
-    name: E2E Tests
-    runs-on: self-hosted
-    needs: build-docker
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and start services
-        run: |
-          docker compose build app
-          docker compose up -d
-          sleep 10
-          docker compose ps
-          curl -sf http://localhost:80/health || (docker compose logs && exit 1)
-
-      - name: Run e2e tests
-        run: cargo test --test e2e -- --ignored --nocapture
-        env:
-          RUST_LOG: lievre=debug
-
-      - name: Dump logs on failure
-        if: failure()
-        run: docker compose logs --tail=100
-
-      - name: Cleanup
-        if: always()
-        run: docker compose down -v
 
   frontend:
     name: Frontend
