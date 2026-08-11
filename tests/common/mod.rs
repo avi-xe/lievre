@@ -33,7 +33,11 @@ pub async fn register_user(client: &Client, suffix: &str) -> (String, String, St
         .await
         .expect("register request failed");
 
-    assert!(resp.status().is_success(), "Registration failed: {}", resp.status());
+    assert!(
+        resp.status().is_success(),
+        "Registration failed: {}",
+        resp.status()
+    );
     let body: Value = resp.json().await.unwrap();
     let token = body["token"].as_str().unwrap().to_string();
     let user_id = body["user"]["id"].as_str().unwrap().to_string();
@@ -50,13 +54,22 @@ pub async fn login_user(client: &Client, email: &str, password: &str) -> String 
         .await
         .expect("login request failed");
 
-    assert!(resp.status().is_success(), "Login failed: {}", resp.status());
+    assert!(
+        resp.status().is_success(),
+        "Login failed: {}",
+        resp.status()
+    );
     let body: Value = resp.json().await.unwrap();
     body["token"].as_str().unwrap().to_string()
 }
 
 /// Create an activity and return activity_id
-pub async fn create_activity(client: &Client, token: &str, title: &str, visibility: &str) -> String {
+pub async fn create_activity(
+    client: &Client,
+    token: &str,
+    title: &str,
+    visibility: &str,
+) -> String {
     let resp = client
         .post(format!("{}/api/activities", BASE_URL))
         .header("Authorization", format!("Bearer {}", token))
@@ -72,7 +85,11 @@ pub async fn create_activity(client: &Client, token: &str, title: &str, visibili
         .await
         .expect("create activity failed");
 
-    assert!(resp.status().is_success(), "Create activity failed: {}", resp.status());
+    assert!(
+        resp.status().is_success(),
+        "Create activity failed: {}",
+        resp.status()
+    );
     let body: Value = resp.json().await.unwrap();
     body["id"].as_str().unwrap().to_string()
 }
@@ -137,7 +154,11 @@ pub async fn import_gpx(client: &Client, token: &str, gpx_content: &str) -> Stri
         .await
         .expect("import GPX failed");
 
-    assert!(resp.status().is_success(), "Import GPX failed: {}", resp.status());
+    assert!(
+        resp.status().is_success(),
+        "Import GPX failed: {}",
+        resp.status()
+    );
     let body: Value = resp.json().await.unwrap();
     body["activity_id"].as_str().unwrap().to_string()
 }

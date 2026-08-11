@@ -44,32 +44,32 @@ impl GpxParser {
 
         loop {
             match reader.read_event_into(&mut buf) {
-                Ok(Event::Start(e)) => {
-                    match e.name().as_ref() {
-                        b"trkpt" => {
-                            current_lat = None;
-                            current_lon = None;
-                            current_ele = None;
-                            current_time = None;
-                            
-                            for attr in e.attributes().flatten() {
-                                match attr.key.as_ref() {
-                                    b"lat" => {
-                                        current_lat = attr.decode_and_unescape_value(&reader)?.parse().ok();
-                                    }
-                                    b"lon" => {
-                                        current_lon = attr.decode_and_unescape_value(&reader)?.parse().ok();
-                                    }
-                                    _ => {}
+                Ok(Event::Start(e)) => match e.name().as_ref() {
+                    b"trkpt" => {
+                        current_lat = None;
+                        current_lon = None;
+                        current_ele = None;
+                        current_time = None;
+
+                        for attr in e.attributes().flatten() {
+                            match attr.key.as_ref() {
+                                b"lat" => {
+                                    current_lat =
+                                        attr.decode_and_unescape_value(&reader)?.parse().ok();
                                 }
+                                b"lon" => {
+                                    current_lon =
+                                        attr.decode_and_unescape_value(&reader)?.parse().ok();
+                                }
+                                _ => {}
                             }
                         }
-                        b"name" => in_name = true,
-                        b"ele" => in_ele = true,
-                        b"time" => in_time = true,
-                        _ => {}
                     }
-                }
+                    b"name" => in_name = true,
+                    b"ele" => in_ele = true,
+                    b"time" => in_time = true,
+                    _ => {}
+                },
                 Ok(Event::Text(e)) => {
                     let text = e.unescape()?.to_string();
                     if in_name {
@@ -119,7 +119,7 @@ impl GpxParser {
         let start_time = times.first().copied().unwrap_or_else(chrono::Utc::now);
         let end_time = times.last().copied().unwrap_or(start_time);
         let duration_seconds = Some((end_time - start_time).num_seconds());
-        
+
         let distance_meters = if !coordinates.is_empty() {
             Some(self.calculate_total_distance(&coordinates))
         } else {
@@ -213,7 +213,7 @@ impl GpxParser {
     /// Detect activity type from filename or track name
     pub fn detect_activity_type(&self, name: Option<&str>) -> ActivityType {
         let name_lower = name.unwrap_or("").to_lowercase();
-        
+
         if name_lower.contains("run") || name_lower.contains("jog") {
             ActivityType::Run
         } else if name_lower.contains("swim") {
@@ -253,7 +253,7 @@ mod tests {
   </trk>
 </gpx>"#;
         let track = parser.parse(gpx_content).unwrap();
-        
+
         assert_eq!(track.name, Some("Morning Ride".to_string()));
         assert_eq!(track.activity_type, ActivityType::Ride);
         assert_eq!(track.coordinates.len(), 3);
@@ -295,7 +295,7 @@ mod tests {
     #[test]
     fn test_haversine_distance() {
         let parser = GpxParser::new();
-        
+
         // Berlin to Potsdam (approx 27km)
         let distance = parser.haversine_distance(52.5200, 13.4050, 52.3906, 13.0645);
         assert!(distance > 25000.0 && distance < 30000.0);
@@ -347,27 +347,42 @@ mod tests {
     #[test]
     fn test_detect_activity_type_run() {
         let parser = GpxParser::new();
-        assert_eq!(parser.detect_activity_type(Some("Morning Run")), ActivityType::Run);
-        assert_eq!(parser.detect_activity_type(Some("jog_in_park")), ActivityType::Run);
+        assert_eq!(
+            parser.detect_activity_type(Some("Morning Run")),
+            ActivityType::Run
+        );
+        assert_eq!(
+            parser.detect_activity_type(Some("jog_in_park")),
+            ActivityType::Run
+        );
     }
 
     #[test]
     fn test_detect_activity_type_swim() {
         let parser = GpxParser::new();
-        assert_eq!(parser.detect_activity_type(Some("Pool Swim")), ActivityType::Swim);
+        assert_eq!(
+            parser.detect_activity_type(Some("Pool Swim")),
+            ActivityType::Swim
+        );
     }
 
     #[test]
     fn test_detect_activity_type_ride() {
         let parser = GpxParser::new();
-        assert_eq!(parser.detect_activity_type(Some("Road Bike Ride")), ActivityType::Ride);
+        assert_eq!(
+            parser.detect_activity_type(Some("Road Bike Ride")),
+            ActivityType::Ride
+        );
         assert_eq!(parser.detect_activity_type(None), ActivityType::Ride);
     }
 
     #[test]
     fn test_detect_activity_type_virtual() {
         let parser = GpxParser::new();
-        assert_eq!(parser.detect_activity_type(Some("Virtual Ride - Zwift")), ActivityType::VirtualRide);
+        assert_eq!(
+            parser.detect_activity_type(Some("Virtual Ride - Zwift")),
+            ActivityType::VirtualRide
+        );
     }
 
     #[test]

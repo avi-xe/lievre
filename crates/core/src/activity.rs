@@ -84,7 +84,11 @@ impl ActivityRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, user_id: &str, activity: CreateActivity) -> anyhow::Result<Activity> {
+    pub async fn create(
+        &self,
+        user_id: &str,
+        activity: CreateActivity,
+    ) -> anyhow::Result<Activity> {
         let id = uuid::Uuid::new_v4().to_string();
         let visibility = activity.visibility.unwrap_or(Visibility::Followers);
 
@@ -110,19 +114,22 @@ impl ActivityRepository {
     }
 
     pub async fn find_by_id(&self, id: &str) -> anyhow::Result<Option<Activity>> {
-        let activity = sqlx::query_as::<_, Activity>(
-            "SELECT * FROM activities WHERE id = ?"
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let activity = sqlx::query_as::<_, Activity>("SELECT * FROM activities WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(activity)
     }
 
-    pub async fn find_by_user_id(&self, user_id: &str, limit: i64, offset: i64) -> anyhow::Result<Vec<Activity>> {
+    pub async fn find_by_user_id(
+        &self,
+        user_id: &str,
+        limit: i64,
+        offset: i64,
+    ) -> anyhow::Result<Vec<Activity>> {
         let activities = sqlx::query_as::<_, Activity>(
-            "SELECT * FROM activities WHERE user_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?"
+            "SELECT * FROM activities WHERE user_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?",
         )
         .bind(user_id)
         .bind(limit)
@@ -133,14 +140,18 @@ impl ActivityRepository {
         Ok(activities)
     }
 
-    pub async fn update(&self, id: &str, activity: UpdateActivity) -> anyhow::Result<Option<Activity>> {
+    pub async fn update(
+        &self,
+        id: &str,
+        activity: UpdateActivity,
+    ) -> anyhow::Result<Option<Activity>> {
         let existing = self.find_by_id(id).await?;
         if existing.is_none() {
             return Ok(None);
         }
 
         let existing = existing.unwrap();
-        
+
         let activity = sqlx::query_as::<_, Activity>(
             r#"UPDATE activities 
                SET title = ?, description = ?, duration_seconds = ?, distance_meters = ?, elevation_gain_meters = ?, visibility = ?, updated_at = datetime('now')
@@ -170,12 +181,11 @@ impl ActivityRepository {
     }
 
     pub async fn count_by_user_id(&self, user_id: &str) -> anyhow::Result<i64> {
-        let result = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM activities WHERE user_id = ?"
-        )
-        .bind(user_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM activities WHERE user_id = ?")
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(result)
     }
@@ -187,7 +197,7 @@ mod tests {
 
     async fn setup_db() -> SqlitePool {
         let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-        
+
         sqlx::query(
             r#"CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -198,7 +208,7 @@ mod tests {
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await
@@ -218,7 +228,7 @@ mod tests {
                 visibility TEXT DEFAULT 'followers',
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await

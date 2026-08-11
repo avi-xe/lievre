@@ -5,10 +5,15 @@ mod geojson;
 mod import;
 mod social;
 
-use axum::{routing::{get, post, delete}, Router};
+use axum::{
+    routing::{delete, get, post},
+    Router,
+};
+use lievre_core::{
+    ActivityRepository, AuthService, RouteRepository, SocialRepository, UserRepository,
+};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use lievre_core::{ActivityRepository, AuthService, RouteRepository, SocialRepository, UserRepository};
 
 /// Combined application state
 #[derive(Clone)]
@@ -26,13 +31,16 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize tracing
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| "lievre=debug,tower_http=debug".into()))
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "lievre=debug,tower_http=debug".into()),
+        )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     // Initialize database
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://data/lievre.db".to_string());
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://data/lievre.db".to_string());
     let pool = lievre_shared::db::create_pool(&database_url).await?;
     lievre_shared::db::run_migrations(&pool).await?;
 
@@ -42,7 +50,8 @@ async fn main() -> anyhow::Result<()> {
     let user_repo = UserRepository::new(pool.clone());
 
     // Initialize auth service
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-in-production".to_string());
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "dev-secret-change-in-production".to_string());
     let auth_service = AuthService::new(user_repo, jwt_secret);
 
     // Social repository
@@ -69,7 +78,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/activities", get(activities::list_activities))
         .route("/api/activities/:id", get(activities::get_activity))
         .route("/api/activities/:id", delete(activities::delete_activity))
-        .route("/api/activities/:id/geojson", get(geojson::get_activity_geojson))
+        .route(
+            "/api/activities/:id/geojson",
+            get(geojson::get_activity_geojson),
+        )
         // Social
         .route("/api/users/:id/follow", post(social::follow_user))
         .route("/api/users/:id/follow", delete(social::unfollow_user))
@@ -129,7 +141,9 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
         assert_eq!(body, "OK");
     }
 }

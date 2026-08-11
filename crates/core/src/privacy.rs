@@ -26,12 +26,8 @@ impl PrivacyService {
         privacy_zones: &[PrivacyZone],
     ) -> bool {
         for zone in privacy_zones {
-            let distance = Self::haversine_distance(
-                latitude,
-                longitude,
-                zone.latitude,
-                zone.longitude,
-            );
+            let distance =
+                Self::haversine_distance(latitude, longitude, zone.latitude, zone.longitude);
             if distance <= zone.radius_meters {
                 return true;
             }
@@ -51,12 +47,8 @@ impl PrivacyService {
         let mut min_distance = f64::MAX;
 
         for zone in privacy_zones {
-            let distance = Self::haversine_distance(
-                latitude,
-                longitude,
-                zone.latitude,
-                zone.longitude,
-            );
+            let distance =
+                Self::haversine_distance(latitude, longitude, zone.latitude, zone.longitude);
             if distance < min_distance {
                 min_distance = distance;
                 nearest_zone = Some(zone);
@@ -120,8 +112,10 @@ impl PrivacyService {
         let d_lat = (lat2 - lat1).to_radians();
         let d_lon = (lon2 - lon1).to_radians();
         let a = (d_lat / 2.0).sin() * (d_lat / 2.0).sin()
-            + lat1.to_radians().cos() * lat2.to_radians().cos()
-            * (d_lon / 2.0).sin() * (d_lon / 2.0).sin();
+            + lat1.to_radians().cos()
+                * lat2.to_radians().cos()
+                * (d_lon / 2.0).sin()
+                * (d_lon / 2.0).sin();
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
         r * c
     }
@@ -154,12 +148,7 @@ impl PrivacyService {
     }
 
     /// Move a point in a given direction (bearing in degrees)
-    fn move_direction(
-        lat: f64,
-        lon: f64,
-        distance: f64,
-        bearing: f64,
-    ) -> (f64, f64) {
+    fn move_direction(lat: f64, lon: f64, distance: f64, bearing: f64) -> (f64, f64) {
         let r = 6_371_000.0; // Earth radius in meters
         let lat1 = lat.to_radians();
         let lon1 = lon.to_radians();
@@ -170,9 +159,8 @@ impl PrivacyService {
         .asin();
 
         let lon2 = lon1
-            + (bearing_rad.sin() * (distance / r).sin() * lat1.cos()).atan2(
-                (distance / r).cos() - lat1.sin() * lat2.sin(),
-            );
+            + (bearing_rad.sin() * (distance / r).sin() * lat1.cos())
+                .atan2((distance / r).cos() - lat1.sin() * lat2.sin());
 
         (lat2.to_degrees(), lon2.to_degrees())
     }
@@ -223,12 +211,7 @@ mod tests {
         let (blurred_lat, blurred_lon) = service.blur_point(52.52, 13.405, &zones);
 
         // Blurred point should be at the edge of the zone
-        let distance = PrivacyService::haversine_distance(
-            blurred_lat,
-            blurred_lon,
-            52.52,
-            13.405,
-        );
+        let distance = PrivacyService::haversine_distance(blurred_lat, blurred_lon, 52.52, 13.405);
         assert!((distance - 200.0).abs() < 1.0); // Within 1 meter
     }
 
@@ -271,12 +254,8 @@ mod tests {
         let blurred = service.blur_route_endpoints(&coordinates, &zones);
 
         // Start should be blurred
-        let start_distance = PrivacyService::haversine_distance(
-            blurred[0][1],
-            blurred[0][0],
-            52.52,
-            13.405,
-        );
+        let start_distance =
+            PrivacyService::haversine_distance(blurred[0][1], blurred[0][0], 52.52, 13.405);
         assert!((start_distance - 200.0).abs() < 1.0);
 
         // Middle should not change

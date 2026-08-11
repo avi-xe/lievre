@@ -32,8 +32,10 @@ impl StatsComputer {
         let d_lat = (lat2 - lat1).to_radians();
         let d_lon = (lon2 - lon1).to_radians();
         let a = (d_lat / 2.0).sin() * (d_lat / 2.0).sin()
-            + lat1.to_radians().cos() * lat2.to_radians().cos()
-            * (d_lon / 2.0).sin() * (d_lon / 2.0).sin();
+            + lat1.to_radians().cos()
+                * lat2.to_radians().cos()
+                * (d_lon / 2.0).sin()
+                * (d_lon / 2.0).sin();
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
         r * c
     }
@@ -95,10 +97,17 @@ impl StatsComputer {
         for i in 1..coordinates.len().min(timestamps.len()) {
             if let (Some(start), Some(end)) = (
                 chrono::NaiveDateTime::parse_from_str(&timestamps[i - 1], "%Y-%m-%dT%H:%M:%S%.fZ")
-                    .or_else(|_| chrono::NaiveDateTime::parse_from_str(&timestamps[i - 1], "%Y-%m-%dT%H:%M:%SZ"))
+                    .or_else(|_| {
+                        chrono::NaiveDateTime::parse_from_str(
+                            &timestamps[i - 1],
+                            "%Y-%m-%dT%H:%M:%SZ",
+                        )
+                    })
                     .ok(),
                 chrono::NaiveDateTime::parse_from_str(&timestamps[i], "%Y-%m-%dT%H:%M:%S%.fZ")
-                    .or_else(|_| chrono::NaiveDateTime::parse_from_str(&timestamps[i], "%Y-%m-%dT%H:%M:%SZ"))
+                    .or_else(|_| {
+                        chrono::NaiveDateTime::parse_from_str(&timestamps[i], "%Y-%m-%dT%H:%M:%SZ")
+                    })
                     .ok(),
             ) {
                 let dt = (end - start).num_seconds() as f64;
@@ -203,7 +212,7 @@ mod tests {
         let elevations = vec![100.0, 150.0, 120.0, 200.0];
         let (gain, loss) = StatsComputer::calculate_elevation(&elevations);
         assert_eq!(gain, 130.0); // 50 + 80
-        assert_eq!(loss, 30.0);  // 30
+        assert_eq!(loss, 30.0); // 30
     }
 
     #[test]

@@ -6,15 +6,15 @@ use sqlx::{FromRow, SqlitePool};
 pub struct Route {
     pub id: String,
     pub activity_id: String,
-    pub coordinates: String,  // JSON array of [lon, lat] or [lon, lat, ele]
-    pub elevation_data: Option<String>,  // JSON array of elevation values
+    pub coordinates: String, // JSON array of [lon, lat] or [lon, lat, ele]
+    pub elevation_data: Option<String>, // JSON array of elevation values
     pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateRoute {
     pub activity_id: String,
-    pub coordinates: Vec<Vec<f64>>,  // [[lon, lat], [lon, lat, ele], ...]
+    pub coordinates: Vec<Vec<f64>>, // [[lon, lat], [lon, lat, ele], ...]
     pub elevation_data: Option<Vec<f64>>,
 }
 
@@ -31,7 +31,8 @@ impl RouteRepository {
     pub async fn create(&self, route: CreateRoute) -> anyhow::Result<Route> {
         let id = uuid::Uuid::new_v4().to_string();
         let coordinates = serde_json::to_string(&route.coordinates)?;
-        let elevation_data = route.elevation_data
+        let elevation_data = route
+            .elevation_data
             .map(|e| serde_json::to_string(&e))
             .transpose()?;
 
@@ -51,12 +52,10 @@ impl RouteRepository {
     }
 
     pub async fn find_by_activity_id(&self, activity_id: &str) -> anyhow::Result<Option<Route>> {
-        let route = sqlx::query_as::<_, Route>(
-            "SELECT * FROM routes WHERE activity_id = ?"
-        )
-        .bind(activity_id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let route = sqlx::query_as::<_, Route>("SELECT * FROM routes WHERE activity_id = ?")
+            .bind(activity_id)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(route)
     }
@@ -72,7 +71,7 @@ impl RouteRepository {
 
     pub async fn to_geojson(&self, route: &Route) -> anyhow::Result<serde_json::Value> {
         let coordinates: Vec<Vec<f64>> = serde_json::from_str(&route.coordinates)?;
-        
+
         let geojson = serde_json::json!({
             "type": "Feature",
             "geometry": {
@@ -92,7 +91,7 @@ mod tests {
 
     async fn setup_db() -> SqlitePool {
         let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
-        
+
         sqlx::query(
             r#"CREATE TABLE IF NOT EXISTS users (
                 id TEXT PRIMARY KEY,
@@ -103,7 +102,7 @@ mod tests {
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await
@@ -123,7 +122,7 @@ mod tests {
                 visibility TEXT DEFAULT 'followers',
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await
@@ -136,7 +135,7 @@ mod tests {
                 coordinates TEXT NOT NULL,
                 elevation_data TEXT,
                 created_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await
@@ -189,10 +188,7 @@ mod tests {
 
         let route = CreateRoute {
             activity_id: "activity-1".to_string(),
-            coordinates: vec![
-                vec![13.404954, 52.520008],
-                vec![13.405101, 52.520212],
-            ],
+            coordinates: vec![vec![13.404954, 52.520008], vec![13.405101, 52.520212]],
             elevation_data: None,
         };
 
@@ -210,10 +206,7 @@ mod tests {
 
         let route = CreateRoute {
             activity_id: "activity-1".to_string(),
-            coordinates: vec![
-                vec![13.404954, 52.520008],
-                vec![13.405101, 52.520212],
-            ],
+            coordinates: vec![vec![13.404954, 52.520008], vec![13.405101, 52.520212]],
             elevation_data: None,
         };
 

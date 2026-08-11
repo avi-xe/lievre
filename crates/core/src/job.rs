@@ -1,6 +1,6 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
-use chrono::Utc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum JobStatus {
@@ -51,7 +51,9 @@ impl std::fmt::Display for JobType {
             JobType::ProcessFit { activity_id } => write!(f, "process_fit:{}", activity_id),
             JobType::ProcessTcx { activity_id } => write!(f, "process_tcx:{}", activity_id),
             JobType::ComputeStats { activity_id } => write!(f, "compute_stats:{}", activity_id),
-            JobType::GenerateGeoJson { activity_id } => write!(f, "generate_geojson:{}", activity_id),
+            JobType::GenerateGeoJson { activity_id } => {
+                write!(f, "generate_geojson:{}", activity_id)
+            }
         }
     }
 }
@@ -112,7 +114,7 @@ impl JobRepository {
 
         sqlx::query(
             "INSERT INTO jobs (id, job_type, payload, status, priority, created_at)
-             VALUES (?, ?, ?, 'pending', ?, ?)"
+             VALUES (?, ?, ?, 'pending', ?, ?)",
         )
         .bind(&id)
         .bind(&job_type_str)
@@ -139,7 +141,7 @@ impl JobRepository {
              WHERE status = 'pending'
              AND (next_retry_at IS NULL OR next_retry_at <= ?)
              ORDER BY priority DESC, created_at ASC
-             LIMIT 1"
+             LIMIT 1",
         )
         .bind(&now)
         .fetch_optional(&self.pool)
@@ -150,7 +152,7 @@ impl JobRepository {
             let processing_at = Utc::now().to_rfc3339();
             sqlx::query(
                 "UPDATE jobs SET status = 'processing', started_at = ?, attempts = attempts + 1
-                 WHERE id = ?"
+                 WHERE id = ?",
             )
             .bind(&processing_at)
             .bind(&job.id)
@@ -171,13 +173,11 @@ impl JobRepository {
 
     pub async fn complete(&self, job_id: &str) -> Result<(), anyhow::Error> {
         let now = Utc::now().to_rfc3339();
-        sqlx::query(
-            "UPDATE jobs SET status = 'completed', completed_at = ? WHERE id = ?"
-        )
-        .bind(&now)
-        .bind(job_id)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE jobs SET status = 'completed', completed_at = ? WHERE id = ?")
+            .bind(&now)
+            .bind(job_id)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 
@@ -193,7 +193,7 @@ impl JobRepository {
         if job.attempts >= job.max_attempts {
             // Max attempts reached, mark as failed
             sqlx::query(
-                "UPDATE jobs SET status = 'failed', error = ?, completed_at = ? WHERE id = ?"
+                "UPDATE jobs SET status = 'failed', error = ?, completed_at = ? WHERE id = ?",
             )
             .bind(error)
             .bind(now.to_rfc3339())
@@ -206,7 +206,7 @@ impl JobRepository {
             let next_retry = (now + chrono::Duration::seconds(backoff_seconds)).to_rfc3339();
 
             sqlx::query(
-                "UPDATE jobs SET status = 'pending', error = ?, next_retry_at = ? WHERE id = ?"
+                "UPDATE jobs SET status = 'pending', error = ?, next_retry_at = ? WHERE id = ?",
             )
             .bind(error)
             .bind(next_retry)
@@ -219,18 +219,16 @@ impl JobRepository {
     }
 
     pub async fn get_pending_count(&self) -> Result<i64, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM jobs WHERE status = 'pending'"
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM jobs WHERE status = 'pending'")
+            .fetch_one(&self.pool)
+            .await?;
         Ok(result.0)
     }
 
     pub async fn cleanup_old_jobs(&self, days: i64) -> Result<u64, anyhow::Error> {
         let cutoff = (Utc::now() - chrono::Duration::days(days)).to_rfc3339();
         let result = sqlx::query(
-            "DELETE FROM jobs WHERE status IN ('completed', 'failed') AND completed_at < ?"
+            "DELETE FROM jobs WHERE status IN ('completed', 'failed') AND completed_at < ?",
         )
         .bind(cutoff)
         .execute(&self.pool)
@@ -264,7 +262,7 @@ mod tests {
                 completed_at TEXT,
                 next_retry_at TEXT,
                 error TEXT
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -278,7 +276,15 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        let job = repo.enqueue(JobType::ProcessGpx { activity_id: "test-123".to_string() }, 0).await.unwrap();
+        let job = repo
+            .enqueue(
+                JobType::ProcessGpx {
+                    activity_id: "test-123".to_string(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
 
         assert_eq!(job.status, "pending");
         assert_eq!(job.job_type, "process_gpx:test-123");
@@ -290,7 +296,14 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        repo.enqueue(JobType::ProcessGpx { activity_id: "test-123".to_string() }, 0).await.unwrap();
+        repo.enqueue(
+            JobType::ProcessGpx {
+                activity_id: "test-123".to_string(),
+            },
+            0,
+        )
+        .await
+        .unwrap();
 
         let job = repo.dequeue().await.unwrap();
         assert!(job.is_some());
@@ -305,7 +318,15 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        let job = repo.enqueue(JobType::ProcessGpx { activity_id: "test-123".to_string() }, 0).await.unwrap();
+        let job = repo
+            .enqueue(
+                JobType::ProcessGpx {
+                    activity_id: "test-123".to_string(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
         repo.dequeue().await.unwrap();
         repo.complete(&job.id).await.unwrap();
 
@@ -324,7 +345,15 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        let job = repo.enqueue(JobType::ProcessGpx { activity_id: "test-123".to_string() }, 0).await.unwrap();
+        let job = repo
+            .enqueue(
+                JobType::ProcessGpx {
+                    activity_id: "test-123".to_string(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
         repo.dequeue().await.unwrap();
         repo.fail(&job.id, "Parse error").await.unwrap();
 
@@ -344,7 +373,15 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        let job = repo.enqueue(JobType::ProcessGpx { activity_id: "test-123".to_string() }, 0).await.unwrap();
+        let job = repo
+            .enqueue(
+                JobType::ProcessGpx {
+                    activity_id: "test-123".to_string(),
+                },
+                0,
+            )
+            .await
+            .unwrap();
 
         // Simulate max attempts: dequeue, fail (retry), dequeue, fail (retry), dequeue, fail (permanent)
         for i in 0..3 {
@@ -352,7 +389,9 @@ mod tests {
             assert_eq!(dequeued.attempts, i + 1);
 
             // Fail the job (will retry if attempts < max_attempts)
-            repo.fail(&dequeued.id, &format!("Error attempt {}", i + 1)).await.unwrap();
+            repo.fail(&dequeued.id, &format!("Error attempt {}", i + 1))
+                .await
+                .unwrap();
 
             // Reset next_retry_at to make job immediately available (for test purposes)
             if i < 2 {
@@ -380,8 +419,22 @@ mod tests {
         let pool = setup_db().await;
         let repo = JobRepository::new(pool.clone());
 
-        repo.enqueue(JobType::ProcessGpx { activity_id: "low".to_string() }, 0).await.unwrap();
-        repo.enqueue(JobType::ProcessGpx { activity_id: "high".to_string() }, 10).await.unwrap();
+        repo.enqueue(
+            JobType::ProcessGpx {
+                activity_id: "low".to_string(),
+            },
+            0,
+        )
+        .await
+        .unwrap();
+        repo.enqueue(
+            JobType::ProcessGpx {
+                activity_id: "high".to_string(),
+            },
+            10,
+        )
+        .await
+        .unwrap();
 
         let job = repo.dequeue().await.unwrap().unwrap();
         // High priority should come first
@@ -390,7 +443,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_job_type_serialization() {
-        let job_type = JobType::ComputeStats { activity_id: "test-123".to_string() };
+        let job_type = JobType::ComputeStats {
+            activity_id: "test-123".to_string(),
+        };
         let serialized = job_type.to_string();
         let parsed: JobType = serialized.parse().unwrap();
         assert_eq!(job_type, parsed);

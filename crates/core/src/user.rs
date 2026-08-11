@@ -64,7 +64,7 @@ impl UserRepository {
 
     pub async fn create(&self, user: CreateUser, password_hash: &str) -> anyhow::Result<User> {
         let id = uuid::Uuid::new_v4().to_string();
-        
+
         let user = sqlx::query_as::<_, User>(
             r#"INSERT INTO users (id, email, username, password_hash, display_name)
                VALUES (?, ?, ?, ?, ?)
@@ -82,34 +82,28 @@ impl UserRepository {
     }
 
     pub async fn find_by_email(&self, email: &str) -> anyhow::Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE email = ?"
-        )
-        .bind(email)
-        .fetch_optional(&self.pool)
-        .await?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = ?")
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(user)
     }
 
     pub async fn find_by_username(&self, username: &str) -> anyhow::Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE username = ?"
-        )
-        .bind(username)
-        .fetch_optional(&self.pool)
-        .await?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
+            .bind(username)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(user)
     }
 
     pub async fn find_by_id(&self, id: &str) -> anyhow::Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE id = ?"
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
 
         Ok(user)
     }
@@ -131,7 +125,7 @@ mod tests {
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await

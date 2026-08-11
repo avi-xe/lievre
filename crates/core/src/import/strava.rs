@@ -48,44 +48,45 @@ impl StravaParser {
                 _ => ActivityType::Ride,
             };
 
-            let start_time = record.get(3)
-                .and_then(|s| chrono::NaiveDateTime::parse_from_str(s, "%Y/%m/%d %H:%M:%S UTC").ok())
+            let start_time = record
+                .get(3)
+                .and_then(|s| {
+                    chrono::NaiveDateTime::parse_from_str(s, "%Y/%m/%d %H:%M:%S UTC").ok()
+                })
                 .map(|ndt| ndt.and_utc())
                 .unwrap_or_else(chrono::Utc::now);
 
-            let elapsed_time = record.get(4)
+            let elapsed_time = record
+                .get(4)
                 .and_then(|s| s.parse::<f64>().ok())
                 .map(|t| t as i64);
 
-            let distance = record.get(5)
-                .and_then(|s| s.parse::<f64>().ok());
+            let distance = record.get(5).and_then(|s| s.parse::<f64>().ok());
 
-            let elevation = record.get(6)
+            let elevation = record
+                .get(6)
                 .and_then(|s| s.parse::<f64>().ok())
                 .map(|e| e * 0.3048); // Strava exports elevation in feet
 
-            let avg_speed = record.get(7)
+            let avg_speed = record
+                .get(7)
                 .and_then(|s| s.parse::<f64>().ok())
                 .map(|s| s * 0.44704); // Strava exports speed in mph
 
-            let max_speed = record.get(8)
+            let max_speed = record
+                .get(8)
                 .and_then(|s| s.parse::<f64>().ok())
                 .map(|s| s * 0.44704);
 
-            let avg_hr = record.get(9)
-                .and_then(|s| s.parse::<i32>().ok());
+            let avg_hr = record.get(9).and_then(|s| s.parse::<i32>().ok());
 
-            let max_hr = record.get(10)
-                .and_then(|s| s.parse::<i32>().ok());
+            let max_hr = record.get(10).and_then(|s| s.parse::<i32>().ok());
 
-            let avg_power = record.get(11)
-                .and_then(|s| s.parse::<f64>().ok());
+            let avg_power = record.get(11).and_then(|s| s.parse::<f64>().ok());
 
-            let max_power = record.get(12)
-                .and_then(|s| s.parse::<f64>().ok());
+            let max_power = record.get(12).and_then(|s| s.parse::<f64>().ok());
 
-            let calories = record.get(13)
-                .and_then(|s| s.parse::<i32>().ok());
+            let calories = record.get(13).and_then(|s| s.parse::<i32>().ok());
 
             let description = record.get(14).map(|s| s.to_string());
 

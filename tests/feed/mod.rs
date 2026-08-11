@@ -41,7 +41,9 @@ async fn test_personal_feed() {
     let body: Value = resp.json().await.unwrap();
     let activities = body.as_array().unwrap();
     assert!(
-        activities.iter().any(|a| a["id"].as_str() == Some(&activity_id)),
+        activities
+            .iter()
+            .any(|a| a["id"].as_str() == Some(&activity_id)),
         "Feed should contain the activity"
     );
 
@@ -69,7 +71,10 @@ async fn test_public_feed() {
     assert_eq!(resp.status(), 200);
     let body: Value = resp.json().await.unwrap();
     assert!(
-        body.as_array().unwrap().iter().any(|a| a["id"].as_str() == Some(&activity_id)),
+        body.as_array()
+            .unwrap()
+            .iter()
+            .any(|a| a["id"].as_str() == Some(&activity_id)),
         "Public feed should contain public activity"
     );
 
@@ -94,7 +99,11 @@ async fn test_private_not_in_public_feed() {
         .unwrap();
     let body: Value = resp.json().await.unwrap();
     assert!(
-        !body.as_array().unwrap().iter().any(|a| a["id"].as_str() == Some(&activity_id)),
+        !body
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|a| a["id"].as_str() == Some(&activity_id)),
         "Private activity should NOT be in public feed"
     );
 
@@ -153,7 +162,10 @@ async fn test_feed_sorted_by_time() {
     if activities.len() >= 2 {
         let first_time = activities[0]["started_at"].as_str().unwrap();
         let second_time = activities[1]["started_at"].as_str().unwrap();
-        assert!(first_time >= second_time, "Feed should be sorted newest first");
+        assert!(
+            first_time >= second_time,
+            "Feed should be sorted newest first"
+        );
     }
 
     // Cleanup

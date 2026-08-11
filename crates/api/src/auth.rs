@@ -28,16 +28,24 @@ pub struct UserResponse {
 }
 
 /// Extract token from Authorization header
-pub fn extract_token(headers: &axum::http::header::HeaderMap) -> Result<String, (StatusCode, String)> {
+pub fn extract_token(
+    headers: &axum::http::header::HeaderMap,
+) -> Result<String, (StatusCode, String)> {
     let auth_header = headers
         .get("authorization")
         .and_then(|v| v.to_str().ok())
-        .ok_or((StatusCode::UNAUTHORIZED, "Missing authorization header".to_string()))?;
+        .ok_or((
+            StatusCode::UNAUTHORIZED,
+            "Missing authorization header".to_string(),
+        ))?;
 
     auth_header
         .strip_prefix("Bearer ")
         .map(|s| s.to_string())
-        .ok_or((StatusCode::UNAUTHORIZED, "Invalid authorization format".to_string()))
+        .ok_or((
+            StatusCode::UNAUTHORIZED,
+            "Invalid authorization format".to_string(),
+        ))
 }
 
 pub async fn register(

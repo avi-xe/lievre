@@ -39,13 +39,17 @@ impl SocialRepository {
 
     // Follow operations
 
-    pub async fn follow(&self, follower_id: &str, following_id: &str) -> Result<Follow, anyhow::Error> {
+    pub async fn follow(
+        &self,
+        follower_id: &str,
+        following_id: &str,
+    ) -> Result<Follow, anyhow::Error> {
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
 
         sqlx::query(
             "INSERT INTO follows (id, follower_id, following_id, status, created_at)
-             VALUES (?, ?, ?, 'accepted', ?)"
+             VALUES (?, ?, ?, 'accepted', ?)",
         )
         .bind(&id)
         .bind(follower_id)
@@ -62,19 +66,25 @@ impl SocialRepository {
         Ok(follow)
     }
 
-    pub async fn unfollow(&self, follower_id: &str, following_id: &str) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "DELETE FROM follows WHERE follower_id = ? AND following_id = ?"
-        )
-        .bind(follower_id)
-        .bind(following_id)
-        .execute(&self.pool)
-        .await?;
+    pub async fn unfollow(
+        &self,
+        follower_id: &str,
+        following_id: &str,
+    ) -> Result<bool, anyhow::Error> {
+        let result = sqlx::query("DELETE FROM follows WHERE follower_id = ? AND following_id = ?")
+            .bind(follower_id)
+            .bind(following_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn is_following(&self, follower_id: &str, following_id: &str) -> Result<bool, anyhow::Error> {
+    pub async fn is_following(
+        &self,
+        follower_id: &str,
+        following_id: &str,
+    ) -> Result<bool, anyhow::Error> {
         let result: (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM follows WHERE follower_id = ? AND following_id = ? AND status = 'accepted'"
         )
@@ -110,7 +120,7 @@ impl SocialRepository {
 
     pub async fn get_follower_count(&self, user_id: &str) -> Result<i64, anyhow::Error> {
         let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM follows WHERE following_id = ? AND status = 'accepted'"
+            "SELECT COUNT(*) FROM follows WHERE following_id = ? AND status = 'accepted'",
         )
         .bind(user_id)
         .fetch_one(&self.pool)
@@ -121,7 +131,7 @@ impl SocialRepository {
 
     pub async fn get_following_count(&self, user_id: &str) -> Result<i64, anyhow::Error> {
         let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM follows WHERE follower_id = ? AND status = 'accepted'"
+            "SELECT COUNT(*) FROM follows WHERE follower_id = ? AND status = 'accepted'",
         )
         .bind(user_id)
         .fetch_one(&self.pool)
@@ -138,7 +148,7 @@ impl SocialRepository {
 
         sqlx::query(
             "INSERT INTO likes (id, activity_id, user_id, created_at)
-             VALUES (?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?)",
         )
         .bind(&id)
         .bind(activity_id)
@@ -156,43 +166,38 @@ impl SocialRepository {
     }
 
     pub async fn unlike(&self, activity_id: &str, user_id: &str) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "DELETE FROM likes WHERE activity_id = ? AND user_id = ?"
-        )
-        .bind(activity_id)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM likes WHERE activity_id = ? AND user_id = ?")
+            .bind(activity_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     pub async fn has_liked(&self, activity_id: &str, user_id: &str) -> Result<bool, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM likes WHERE activity_id = ? AND user_id = ?"
-        )
-        .bind(activity_id)
-        .bind(user_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM likes WHERE activity_id = ? AND user_id = ?")
+                .bind(activity_id)
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(result.0 > 0)
     }
 
     pub async fn get_like_count(&self, activity_id: &str) -> Result<i64, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM likes WHERE activity_id = ?"
-        )
-        .bind(activity_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM likes WHERE activity_id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(result.0)
     }
 
     pub async fn get_likes(&self, activity_id: &str) -> Result<Vec<Like>, anyhow::Error> {
         let likes = sqlx::query_as::<_, Like>(
-            "SELECT * FROM likes WHERE activity_id = ? ORDER BY created_at DESC"
+            "SELECT * FROM likes WHERE activity_id = ? ORDER BY created_at DESC",
         )
         .bind(activity_id)
         .fetch_all(&self.pool)
@@ -203,13 +208,18 @@ impl SocialRepository {
 
     // Comment operations
 
-    pub async fn add_comment(&self, activity_id: &str, user_id: &str, content: &str) -> Result<Comment, anyhow::Error> {
+    pub async fn add_comment(
+        &self,
+        activity_id: &str,
+        user_id: &str,
+        content: &str,
+    ) -> Result<Comment, anyhow::Error> {
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
 
         sqlx::query(
             "INSERT INTO comments (id, activity_id, user_id, content, created_at)
-             VALUES (?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?)",
         )
         .bind(&id)
         .bind(activity_id)
@@ -227,21 +237,23 @@ impl SocialRepository {
         Ok(comment)
     }
 
-    pub async fn delete_comment(&self, comment_id: &str, user_id: &str) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "DELETE FROM comments WHERE id = ? AND user_id = ?"
-        )
-        .bind(comment_id)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
+    pub async fn delete_comment(
+        &self,
+        comment_id: &str,
+        user_id: &str,
+    ) -> Result<bool, anyhow::Error> {
+        let result = sqlx::query("DELETE FROM comments WHERE id = ? AND user_id = ?")
+            .bind(comment_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     pub async fn get_comments(&self, activity_id: &str) -> Result<Vec<Comment>, anyhow::Error> {
         let comments = sqlx::query_as::<_, Comment>(
-            "SELECT * FROM comments WHERE activity_id = ? ORDER BY created_at ASC"
+            "SELECT * FROM comments WHERE activity_id = ? ORDER BY created_at ASC",
         )
         .bind(activity_id)
         .fetch_all(&self.pool)
@@ -251,26 +263,29 @@ impl SocialRepository {
     }
 
     pub async fn get_comment_count(&self, activity_id: &str) -> Result<i64, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM comments WHERE activity_id = ?"
-        )
-        .bind(activity_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM comments WHERE activity_id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(result.0)
     }
 
     // Feed operations
 
-    pub async fn get_feed(&self, user_id: &str, limit: i64, offset: i64) -> Result<Vec<crate::activity::Activity>, anyhow::Error> {
+    pub async fn get_feed(
+        &self,
+        user_id: &str,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<crate::activity::Activity>, anyhow::Error> {
         let activities = sqlx::query_as::<_, crate::activity::Activity>(
             "SELECT a.* FROM activities a
              INNER JOIN follows f ON a.user_id = f.following_id
              WHERE f.follower_id = ? AND f.status = 'accepted'
              AND a.visibility IN ('public', 'followers')
              ORDER BY a.started_at DESC
-             LIMIT ? OFFSET ?"
+             LIMIT ? OFFSET ?",
         )
         .bind(user_id)
         .bind(limit)
@@ -281,12 +296,16 @@ impl SocialRepository {
         Ok(activities)
     }
 
-    pub async fn get_public_feed(&self, limit: i64, offset: i64) -> Result<Vec<crate::activity::Activity>, anyhow::Error> {
+    pub async fn get_public_feed(
+        &self,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<crate::activity::Activity>, anyhow::Error> {
         let activities = sqlx::query_as::<_, crate::activity::Activity>(
             "SELECT * FROM activities
              WHERE visibility = 'public'
              ORDER BY started_at DESC
-             LIMIT ? OFFSET ?"
+             LIMIT ? OFFSET ?",
         )
         .bind(limit)
         .bind(offset)
@@ -318,7 +337,7 @@ mod tests {
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -338,7 +357,7 @@ mod tests {
                 visibility TEXT DEFAULT 'followers',
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -352,7 +371,7 @@ mod tests {
                 status TEXT NOT NULL DEFAULT 'accepted',
                 created_at TEXT DEFAULT (datetime('now')),
                 UNIQUE(follower_id, following_id)
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -365,7 +384,7 @@ mod tests {
                 user_id TEXT NOT NULL REFERENCES users(id),
                 created_at TEXT DEFAULT (datetime('now')),
                 UNIQUE(activity_id, user_id)
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -378,7 +397,7 @@ mod tests {
                 user_id TEXT NOT NULL REFERENCES users(id),
                 content TEXT NOT NULL,
                 created_at TEXT DEFAULT (datetime('now'))
-            )"
+            )",
         )
         .execute(&pool)
         .await
@@ -460,7 +479,10 @@ mod tests {
         let pool = setup_db().await;
         let repo = SocialRepository::new(pool);
 
-        let comment = repo.add_comment("act1", "user1", "Great ride!").await.unwrap();
+        let comment = repo
+            .add_comment("act1", "user1", "Great ride!")
+            .await
+            .unwrap();
         assert_eq!(comment.content, "Great ride!");
         assert_eq!(repo.get_comment_count("act1").await.unwrap(), 1);
 

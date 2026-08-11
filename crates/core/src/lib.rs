@@ -8,14 +8,16 @@ pub mod social;
 pub mod stats;
 pub mod user;
 
-pub use activity::{Activity, ActivityType, ActivityRepository, CreateActivity, UpdateActivity, Visibility};
+pub use activity::{
+    Activity, ActivityRepository, ActivityType, CreateActivity, UpdateActivity, Visibility,
+};
 pub use auth::{AuthService, Claims};
 pub use import::gpx::GpxParser;
-pub use import::tcx::TcxParser;
 pub use import::strava::StravaParser;
-pub use job::{Job, JobRepository, JobType, JobStatus};
+pub use import::tcx::TcxParser;
+pub use job::{Job, JobRepository, JobStatus, JobType};
 pub use privacy::{PrivacyService, PrivacyZone};
 pub use route::{CreateRoute, Route, RouteRepository};
-pub use social::{SocialRepository, Follow, Like, Comment};
+pub use social::{Comment, Follow, Like, SocialRepository};
 pub use stats::{ActivityStats, StatsComputer};
 pub use user::{User, UserRepository};

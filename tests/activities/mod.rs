@@ -54,7 +54,11 @@ async fn test_activity_crud_lifecycle() {
         .unwrap();
     assert_eq!(resp.status(), 200);
     let body: Value = resp.json().await.unwrap();
-    assert!(body.as_array().unwrap().iter().any(|a| a["id"].as_str() == Some(&activity_id)));
+    assert!(body
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["id"].as_str() == Some(&activity_id)));
 
     // Delete
     delete_activity(&client, &token, &activity_id).await;

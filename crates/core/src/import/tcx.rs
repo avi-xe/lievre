@@ -64,46 +64,44 @@ impl TcxParser {
 
         loop {
             match reader.read_event_into(&mut buf) {
-                Ok(Event::Start(e)) => {
-                    match e.name().as_ref() {
-                        b"Lap" => in_lap = true,
-                        b"Trackpoint" => in_trackpoint = true,
-                        b"Time" => {
-                            if in_trackpoint {
-                                in_time = true;
-                            }
+                Ok(Event::Start(e)) => match e.name().as_ref() {
+                    b"Lap" => in_lap = true,
+                    b"Trackpoint" => in_trackpoint = true,
+                    b"Time" => {
+                        if in_trackpoint {
+                            in_time = true;
                         }
-                        b"DistanceMeters" => {
-                            if in_lap {
-                                in_distance = true;
-                            }
-                        }
-                        b"AltitudeMeters" => {
-                            if in_trackpoint {
-                                in_altitude = true;
-                            }
-                        }
-                        b"Heartratebpm" => {
-                            if in_trackpoint {
-                                in_heartrate = true;
-                            }
-                        }
-                        b"Calories" => {
-                            if in_lap {
-                                in_calories = true;
-                            }
-                        }
-                        b"TotalTimeSeconds" => {
-                            if in_lap {
-                                in_totaltime = true;
-                            }
-                        }
-                        _ => {}
                     }
-                }
+                    b"DistanceMeters" => {
+                        if in_lap {
+                            in_distance = true;
+                        }
+                    }
+                    b"AltitudeMeters" => {
+                        if in_trackpoint {
+                            in_altitude = true;
+                        }
+                    }
+                    b"Heartratebpm" => {
+                        if in_trackpoint {
+                            in_heartrate = true;
+                        }
+                    }
+                    b"Calories" => {
+                        if in_lap {
+                            in_calories = true;
+                        }
+                    }
+                    b"TotalTimeSeconds" => {
+                        if in_lap {
+                            in_totaltime = true;
+                        }
+                    }
+                    _ => {}
+                },
                 Ok(Event::Text(e)) => {
                     let text = e.unescape()?.to_string();
-                    
+
                     if in_time && in_trackpoint {
                         if let Ok(_time) = text.parse::<chrono::DateTime<chrono::Utc>>() {
                             activity.coordinates.push(Vec::new()); // Placeholder
@@ -130,19 +128,17 @@ impl TcxParser {
                         }
                     }
                 }
-                Ok(Event::End(e)) => {
-                    match e.name().as_ref() {
-                        b"Lap" => in_lap = false,
-                        b"Trackpoint" => in_trackpoint = false,
-                        b"Time" => in_time = false,
-                        b"DistanceMeters" => in_distance = false,
-                        b"AltitudeMeters" => in_altitude = false,
-                        b"Heartratebpm" => in_heartrate = false,
-                        b"Calories" => in_calories = false,
-                        b"TotalTimeSeconds" => in_totaltime = false,
-                        _ => {}
-                    }
-                }
+                Ok(Event::End(e)) => match e.name().as_ref() {
+                    b"Lap" => in_lap = false,
+                    b"Trackpoint" => in_trackpoint = false,
+                    b"Time" => in_time = false,
+                    b"DistanceMeters" => in_distance = false,
+                    b"AltitudeMeters" => in_altitude = false,
+                    b"Heartratebpm" => in_heartrate = false,
+                    b"Calories" => in_calories = false,
+                    b"TotalTimeSeconds" => in_totaltime = false,
+                    _ => {}
+                },
                 Ok(Event::Eof) => break,
                 Err(e) => return Err(anyhow::anyhow!("TCX parse error: {}", e)),
                 _ => {}
@@ -152,7 +148,7 @@ impl TcxParser {
 
         activity.distance_meters = Some(total_distance);
         activity.duration_seconds = Some(total_time as i64);
-        
+
         // Calculate elevation gain
         if activity.elevation_data.len() > 1 {
             let mut gain = 0.0;

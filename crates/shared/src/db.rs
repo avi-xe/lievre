@@ -19,17 +19,13 @@ pub async fn create_pool(database_url: &str) -> anyhow::Result<SqlitePool> {
         .await?;
 
     // Enable foreign keys
-    sqlx::query("PRAGMA foreign_keys=ON")
-        .execute(&pool)
-        .await?;
+    sqlx::query("PRAGMA foreign_keys=ON").execute(&pool).await?;
 
     Ok(pool)
 }
 
 pub async fn run_migrations(pool: &SqlitePool) -> anyhow::Result<()> {
-    sqlx::migrate!("../../migrations")
-        .run(pool)
-        .await?;
+    sqlx::migrate!("../../migrations").run(pool).await?;
 
     Ok(())
 }
@@ -41,11 +37,8 @@ mod tests {
     #[tokio::test]
     async fn test_create_pool() {
         let pool = create_pool("sqlite::memory:").await.unwrap();
-        
+
         // Verify pool is working
-        sqlx::query("SELECT 1")
-            .execute(&pool)
-            .await
-            .unwrap();
+        sqlx::query("SELECT 1").execute(&pool).await.unwrap();
     }
 }

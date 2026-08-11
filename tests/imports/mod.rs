@@ -32,7 +32,10 @@ async fn test_import_gpx_creates_activity() {
 
     // Verify GeoJSON
     let resp = client
-        .get(format!("{}/api/activities/{}/geojson", BASE_URL, activity_id))
+        .get(format!(
+            "{}/api/activities/{}/geojson",
+            BASE_URL, activity_id
+        ))
         .send()
         .await
         .unwrap();
@@ -84,7 +87,11 @@ async fn test_import_tcx_creates_activity() {
         .send()
         .await
         .unwrap();
-    assert!(resp.status().is_success(), "TCX import failed: {}", resp.status());
+    assert!(
+        resp.status().is_success(),
+        "TCX import failed: {}",
+        resp.status()
+    );
     let body: Value = resp.json().await.unwrap();
     let activity_id = body["activity_id"].as_str().unwrap().to_string();
 

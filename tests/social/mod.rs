@@ -197,7 +197,10 @@ async fn test_add_delete_comment() {
 
     // Add comment
     let resp = client
-        .post(format!("{}/api/activities/{}/comments", BASE_URL, activity_id))
+        .post(format!(
+            "{}/api/activities/{}/comments",
+            BASE_URL, activity_id
+        ))
         .header("Authorization", format!("Bearer {}", token_commenter))
         .json(&json!({ "content": "Nice ride!" }))
         .send()
@@ -210,7 +213,10 @@ async fn test_add_delete_comment() {
 
     // Get comments
     let resp = client
-        .get(format!("{}/api/activities/{}/comments", BASE_URL, activity_id))
+        .get(format!(
+            "{}/api/activities/{}/comments",
+            BASE_URL, activity_id
+        ))
         .send()
         .await
         .unwrap();
@@ -222,7 +228,10 @@ async fn test_add_delete_comment() {
 
     // Verify empty
     let resp = client
-        .get(format!("{}/api/activities/{}/comments", BASE_URL, activity_id))
+        .get(format!(
+            "{}/api/activities/{}/comments",
+            BASE_URL, activity_id
+        ))
         .send()
         .await
         .unwrap();
@@ -247,7 +256,10 @@ async fn test_multiple_comments() {
     let mut comment_ids = Vec::new();
     for i in 0..3 {
         let resp = client
-            .post(format!("{}/api/activities/{}/comments", BASE_URL, activity_id))
+            .post(format!(
+                "{}/api/activities/{}/comments",
+                BASE_URL, activity_id
+            ))
             .header("Authorization", format!("Bearer {}", token_commenter))
             .json(&json!({ "content": format!("Comment {}", i) }))
             .send()
@@ -259,7 +271,10 @@ async fn test_multiple_comments() {
 
     // Verify count
     let resp = client
-        .get(format!("{}/api/activities/{}/comments", BASE_URL, activity_id))
+        .get(format!(
+            "{}/api/activities/{}/comments",
+            BASE_URL, activity_id
+        ))
         .send()
         .await
         .unwrap();

@@ -59,9 +59,11 @@ impl FitParser {
                         match field.name() {
                             "start_time" => {
                                 if let fitparser::Value::Timestamp(val) = field.value() {
-                                    let _epoch = chrono::DateTime::parse_from_rfc3339("1989-12-31T00:00:00+00:00")
-                                        .unwrap()
-                                        .timestamp();
+                                    let _epoch = chrono::DateTime::parse_from_rfc3339(
+                                        "1989-12-31T00:00:00+00:00",
+                                    )
+                                    .unwrap()
+                                    .timestamp();
                                     // val is DateTime<Local>, convert to UTC
                                     session.start_time = val.with_timezone(&chrono::Utc);
                                 }
@@ -140,17 +142,19 @@ impl FitParser {
                 fitparser::profile::MesgNum::Record => {
                     let mut position_lat: Option<f64> = None;
                     let mut position_lon: Option<f64> = None;
-                    
+
                     for field in record.fields() {
                         match field.name() {
                             "position_lat" => {
                                 if let fitparser::Value::SInt32(val) = field.value() {
-                                    position_lat = Some(*val as f64 * (180.0 / 2i32.pow(31) as f64));
+                                    position_lat =
+                                        Some(*val as f64 * (180.0 / 2i32.pow(31) as f64));
                                 }
                             }
                             "position_long" => {
                                 if let fitparser::Value::SInt32(val) = field.value() {
-                                    position_lon = Some(*val as f64 * (180.0 / 2i32.pow(31) as f64));
+                                    position_lon =
+                                        Some(*val as f64 * (180.0 / 2i32.pow(31) as f64));
                                 }
                             }
                             "altitude" => {
@@ -161,7 +165,7 @@ impl FitParser {
                             _ => {}
                         }
                     }
-                    
+
                     if let (Some(lat), Some(lon)) = (position_lat, position_lon) {
                         session.coordinates.push(vec![lon, lat]);
                     }

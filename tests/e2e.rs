@@ -5,10 +5,10 @@
 //! Run all: cargo test --test e2e -- --ignored
 //! Run domain: cargo test --test e2e auth -- --ignored
 
-mod common;
-mod health;
-mod auth;
 mod activities;
+mod auth;
+mod common;
+mod feed;
+mod health;
 mod imports;
 mod social;
-mod feed;

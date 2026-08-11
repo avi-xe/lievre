@@ -39,7 +39,9 @@ impl AuthService {
             .to_string();
 
         // Create user
-        let username = user.username.unwrap_or_else(|| user.email.split('@').next().unwrap_or("user").to_string());
+        let username = user
+            .username
+            .unwrap_or_else(|| user.email.split('@').next().unwrap_or("user").to_string());
         let create_user = crate::user::CreateUser {
             email: user.email,
             username,
@@ -53,7 +55,8 @@ impl AuthService {
 
     pub async fn login(&self, credentials: LoginUser, password: &str) -> anyhow::Result<String> {
         // Find user by email
-        let user = self.user_repo
+        let user = self
+            .user_repo
             .find_by_email(&credentials.email)
             .await?
             .ok_or_else(|| anyhow::anyhow!("Invalid credentials"))?;
@@ -90,7 +93,8 @@ impl AuthService {
             &Validation::default(),
         )?;
 
-        let user = self.user_repo
+        let user = self
+            .user_repo
             .find_by_id(&token_data.claims.sub)
             .await?
             .ok_or_else(|| anyhow::anyhow!("User not found"))?;
@@ -115,7 +119,7 @@ mod tests {
                 avatar_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 updated_at TEXT DEFAULT (datetime('now'))
-            )"#
+            )"#,
         )
         .execute(&pool)
         .await

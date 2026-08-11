@@ -1,6 +1,6 @@
+use super::{fit::FitParser, gpx::GpxParser, tcx::TcxParser};
 use crate::activity::Activity;
 use crate::route::Route;
-use super::{gpx::GpxParser, fit::FitParser, tcx::TcxParser};
 
 #[derive(Debug, Clone)]
 pub struct BatchResult {
@@ -51,7 +51,8 @@ impl BatchImporter {
     }
 
     pub fn parse_file(&self, filename: &str, content: &[u8]) -> anyhow::Result<ParsedActivity> {
-        let format = self.detect_format(filename)
+        let format = self
+            .detect_format(filename)
             .ok_or_else(|| anyhow::anyhow!("Unsupported file format: {}", filename))?;
 
         match format {
@@ -185,7 +186,7 @@ mod tests {
 
         let parsed = ParsedActivity::Gpx(gpx_track);
         let create = parsed.to_create_activity();
-        
+
         assert_eq!(create.activity_type, crate::activity::ActivityType::Ride);
         assert_eq!(create.title, Some("Test Ride".to_string()));
         assert_eq!(create.duration_seconds, Some(3600));

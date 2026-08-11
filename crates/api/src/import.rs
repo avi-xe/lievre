@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use lievre_core::{GpxParser, TcxParser, StravaParser};
+use lievre_core::{GpxParser, StravaParser, TcxParser};
 
 #[derive(Debug, serde::Serialize)]
 pub struct ImportResponse {
@@ -159,8 +159,7 @@ pub async fn import_strava(
                     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
                 if !strava_activity.coordinates.is_empty() {
-                    let create_route =
-                        parser.to_create_route(&activity.id, &strava_activity);
+                    let create_route = parser.to_create_route(&activity.id, &strava_activity);
                     let _ = state.route_repo.create(create_route).await;
                 }
 
