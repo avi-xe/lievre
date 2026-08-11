@@ -2,7 +2,7 @@
 
 This document describes the current architecture using the [C4 model](https://c4model.com/) — four levels of abstraction for software architecture.
 
-**Current State:** Epic 1-5 complete (Foundation, File Import, Activity Processing, Maps & Visualization, Social Features).
+**Current State:** Epic 1-6 complete (Foundation, File Import, Activity Processing, Maps & Visualization, Social Features, ActivityPub Federation).
 
 ---
 
@@ -126,7 +126,12 @@ Inside the API Server — the core components we've built.
 graph TB
     subgraph "API Server (crates/api)"
         Main["main.rs<br/><i>Server bootstrap, routing</i>"]
-        ImportAPI["import.rs<br/><i>POST /api/import/gpx</i>"]
+        AuthAPI["auth.rs<br/><i>POST /api/auth/register<br/>POST /api/auth/login</i>"]
+        ImportAPI["import.rs<br/><i>POST /api/import/gpx<br/>POST /api/import/tcx<br/>POST /api/import/strava</i>"]
+        ActivitiesAPI["activities.rs<br/><i>POST /api/activities<br/>GET /api/activities</i>"]
+        SocialAPI["social.rs<br/><i>POST /api/users/:id/follow<br/>POST /api/activities/:id/like</i>"]
+        FeedAPI["feed.rs<br/><i>GET /api/feed<br/>GET /api/feed/public</i>"]
+        FederationAPI["federation.rs<br/><i>GET /.well-known/webfinger<br/>GET /users/:username<br/>POST /users/:username/inbox<br/>GET /users/:username/outbox</i>"]
         GeoJsonAPI["geojson.rs<br/><i>GET /api/activities/:id/geojson</i>"]
     end
 
@@ -158,7 +163,13 @@ graph TB
     end
 
     subgraph "Federation Library (crates/federation)"
-        Federation["lib.rs<br/><i>Stub<br/>(placeholder)</i>"]
+        FederationConfig["config.rs<br/><i>FederationDb<br/>Domain, URLs</i>"]
+        PersonMod["person.rs<br/><i>Person actor<br/>JSON-LD</i>"]
+        ExerciseMod["exercise.rs<br/><i>Exercise object<br/>fedisport vocab</i>"]
+        WebFingerMod["webfinger.rs<br/><i>WebFinger<br/>Discovery</i>"]
+        ActivityMod["activity.rs<br/><i>Create, Follow<br/>Accept, Undo</i>"]
+        KeysMod["keys.rs<br/><i>RSA key pair<br/>generation</i>"]
+        DeliveryMod["delivery.rs<br/><i>Async delivery<br/>queue</i>"]
     end
 
     Main --> ImportAPI
@@ -258,9 +269,16 @@ lievre/
 │   │   └── src/
 │   │       ├── db.rs       # SQLite pool, migrations
 │   │       └── error.rs    # Error types
-│   └── federation/         # ActivityPub (placeholder)
+│   ├── federation/         # ActivityPub federation
 │       └── src/
-│           └── lib.rs      # Stub
+│           ├── lib.rs      # Module exports
+│           ├── config.rs   # FederationDb, domain config
+│           ├── person.rs   # Person actor (JSON-LD)
+│           ├── exercise.rs # Exercise object (fedisport)
+│           ├── activity.rs # Create, Follow, Accept, Undo
+│           ├── webfinger.rs # WebFinger discovery
+│           ├── keys.rs     # RSA key generation
+│           └── delivery.rs # Async delivery queue
 ```
 
 ### Key Interfaces
