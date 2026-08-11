@@ -8,8 +8,8 @@
 mod activities;
 mod auth;
 mod common;
-mod feed;
 mod federation;
+mod feed;
 mod health;
 mod imports;
 mod social;

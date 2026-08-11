@@ -372,7 +372,7 @@ pub async fn inbox(
                 } else {
                     // Create a remote user
                     let new_id = uuid::Uuid::new_v4().to_string();
-                    let remote_username = attributed_to.split('/').last().unwrap_or("remote");
+                    let remote_username = attributed_to.rsplit('/').next().unwrap_or("remote");
                     let remote_domain = attributed_to.split("://").nth(1).unwrap_or("unknown");
 
                     let email = format!("{}@{}", remote_username, remote_domain);
