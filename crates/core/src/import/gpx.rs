@@ -111,9 +111,9 @@ impl GpxParser {
             buf.clear();
         }
 
-        // Validate: non-GPX content has no track points at all
-        if coordinates.is_empty() && name.is_none() {
-            anyhow::bail!("Invalid GPX: no track data found");
+        // Validate: content must look like GPX
+        if !gpx_content.contains("<gpx") {
+            anyhow::bail!("Invalid GPX: not a GPX file");
         }
 
         let start_time = times.first().copied().unwrap_or_else(chrono::Utc::now);
