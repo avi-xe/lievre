@@ -1,3 +1,4 @@
+# E2E Dockerfile — fast debug builds for local development
 FROM rust:latest
 
 RUN apt-get update && apt-get install -y \
@@ -8,9 +9,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy manifests first for dependency caching
-COPY Cargo.toml Cargo.lock ./
-COPY crates/ crates/
+# Copy everything — Docker layer cache handles the rest
+COPY . .
 
 # Build in debug mode (fast incremental builds)
 RUN cargo build -p lievre-api
