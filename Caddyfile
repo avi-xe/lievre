@@ -7,6 +7,14 @@
         reverse_proxy app:3000
     }
 
+    # Federation routes (ActivityPub)
+    handle /.well-known/* {
+        reverse_proxy app:3000
+    }
+    handle /users/* {
+        reverse_proxy app:3000
+    }
+
     # Serve frontend — if file doesn't exist, serve index.html (SPA)
     handle {
         root * /app/frontend/dist
