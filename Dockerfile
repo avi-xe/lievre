@@ -10,22 +10,29 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Rust backend with cargo-chef
-FROM rust:latest AS chef
-WORKDIR /app
+FROM rust:1.97-slim-bookworm AS chef
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 RUN cargo install cargo-chef --locked
+WORKDIR /app
 
 FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
-# Build dependencies (this layer is cached!)
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo chef cook --release --recipe-path recipe.json -p lievre-api
 
-# Build application
 COPY . .
-RUN cargo build --release -p lievre-api
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release -p lievre-api && \
+    cp target/release/lievre /usr/local/bin/lievre
 
 # Stage 3: Runtime
 FROM debian:bookworm-slim
@@ -34,10 +41,9 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend binary
-COPY --from=builder /app/target/release/lievre /usr/local/bin/
+# Copy backend binary — from the cp destination, NOT /app/target (that's a cache mount)
+COPY --from=builder /usr/local/bin/lievre /usr/local/bin/
 
-# Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
 RUN mkdir -p /app/data

@@ -10,3 +10,12 @@ Dockerfile*
 .dockerignore
 .vscode
 .idea
+
+# frontend
+frontend/node_modules
+frontend/dist
+
+# data / runtime
+data
+*.db
+*.db-journal

@@ -5,7 +5,7 @@ on:
     branches: [master]
   push:
     branches: [master]
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,58 +16,72 @@ jobs:
     name: Lint
     runs-on: self-hosted
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "lint-test" # share cache with the test job below
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets
 
   test:
-    name: Test
+    name: Unit tests
     runs-on: self-hosted
-    needs: lint
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Unit tests
-        run: cargo test --workspace --lib
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "lint-test"
+      - run: cargo test --workspace --lib
 
   frontend:
     name: Frontend
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-
-      - name: Install
-        working-directory: frontend
+      - working-directory: frontend
         run: npm ci
-
-      - name: Lint
-        working-directory: frontend
+      - working-directory: frontend
         run: npm run lint
-
-      - name: Typecheck
-        working-directory: frontend
+      - working-directory: frontend
         run: npm run typecheck
-
-      - name: Build
-        working-directory: frontend
+      - working-directory: frontend
         run: npm run build
+
+  e2e:
+    name: E2E Tests
+    runs-on: self-hosted
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "e2e" # separate cache: e2e test binary has different deps than lib
+
+      - name: Build and start services
+        run: |
+          rm -rf data/ && mkdir -p data
+          docker compose up -d --build --wait
+
+      - name: Run e2e tests
+        run: cargo test --test e2e -- --ignored --nocapture
+        env:
+          RUST_LOG: lievre=debug
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --tail=200
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
