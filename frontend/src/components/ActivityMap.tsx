@@ -1,80 +1,58 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { apiFetch } from '../lib/api';
 
-interface GeoJsonFeature {
-  type: string;
-  geometry: {
-    type: string;
-    coordinates: number[][];
-  };
-}
-
-interface ActivityMapProps {
-  activityId: string;
-  height?: string;
-}
-
-// Component to fit map bounds to route
-function FitBounds({ coordinates }: { coordinates: number[][] }) {
+function FitBounds({ coordinates }: { coordinates: [number, number][] }) {
   const map = useMap();
-
   useEffect(() => {
     if (coordinates.length > 0) {
-      const bounds = L.latLngBounds(
-        coordinates.map((c) => [c[1], c[0]] as [number, number])
-      );
-      map.fitBounds(bounds, { padding: [20, 20] });
+      map.fitBounds(coordinates, { padding: [20, 20] });
     }
   }, [map, coordinates]);
-
   return null;
 }
 
-export function ActivityMap({ activityId, height = '400px' }: ActivityMapProps) {
-  const [geoJson, setGeoJson] = useState<GeoJsonFeature | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface GeoJSONFeature {
+  type: string;
+  geometry: {
+    type: string;
+    coordinates: [number, number][] | [number, number, number][];
+  };
+}
+
+interface GeoJSONResponse {
+  type: string;
+  features: GeoJSONFeature[];
+}
+
+export function ActivityMap({ activityId, height = '400px' }: { activityId: string; height?: string }) {
+  const [geojson, setGeojson] = useState<GeoJSONResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`/api/activities/${activityId}/geojson`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load route');
-        return res.json();
-      })
-      .then((data) => setGeoJson(data as GeoJsonFeature))
-      .catch((err) => setError(err.message));
+    setLoading(true);
+    apiFetch<GeoJSONResponse>(`/api/activities/${activityId}/geojson`)
+      .then(setGeojson)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
   }, [activityId]);
 
-  if (error) {
-    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>Error: {error}</div>;
-  }
+  if (loading) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>Loading map...</div>;
+  if (error) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', color: '#999' }}>No route data</div>;
+  if (!geojson?.features?.length) return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', color: '#999' }}>No route data</div>;
 
-  if (!geoJson) {
-    return <div style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>Loading map...</div>;
-  }
-
-  const coordinates = geoJson.geometry.coordinates;
+  const feature = geojson.features[0];
+  const coords = feature.geometry.coordinates.map(c => [c[1], c[0]] as [number, number]);
 
   return (
-    <MapContainer
-      style={{ height, width: '100%' }}
-      zoom={13}
-      scrollWheelZoom={false}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <FitBounds coordinates={coordinates} />
-      <GeoJSON
-        data={geoJson as GeoJsonFeature & { type: 'Feature' }}
-        style={{
-          color: '#3388ff',
-          weight: 4,
-          opacity: 0.8,
-        }}
-      />
-    </MapContainer>
+    <div style={{ height, borderRadius: 4, overflow: 'hidden', border: '1px solid #ddd' }}>
+      <MapContainer style={{ height: '100%', width: '100%' }} center={[0, 0]} zoom={13}>
+        <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <GeoJSON data={geojson as unknown as GeoJSONResponse} />
+        <FitBounds coordinates={coords} />
+      </MapContainer>
+    </div>
   );
 }
