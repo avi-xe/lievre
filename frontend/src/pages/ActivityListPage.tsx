@@ -17,13 +17,17 @@ function formatDistance(meters: number | null): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
+interface ActivityWithLikes extends Activity {
+  like_count?: number;
+}
+
 export function ActivityListPage() {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityWithLikes[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    apiFetch<Activity[]>('/api/activities')
+    apiFetch<ActivityWithLikes[]>('/api/activities')
       .then(setActivities)
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
@@ -51,6 +55,7 @@ export function ActivityListPage() {
               <th style={{ textAlign: 'left', padding: 8 }}>Date</th>
               <th style={{ textAlign: 'right', padding: 8 }}>Distance</th>
               <th style={{ textAlign: 'right', padding: 8 }}>Duration</th>
+              <th style={{ textAlign: 'right', padding: 8 }}>♥</th>
             </tr>
           </thead>
           <tbody>
@@ -61,6 +66,7 @@ export function ActivityListPage() {
                 <td style={{ padding: 8 }}>{new Date(a.started_at).toLocaleDateString()}</td>
                 <td style={{ padding: 8, textAlign: 'right' }}>{formatDistance(a.distance_meters)}</td>
                 <td style={{ padding: 8, textAlign: 'right' }}>{formatDuration(a.duration_seconds)}</td>
+                <td style={{ padding: 8, textAlign: 'right' }}>{a.like_count ?? '-'}</td>
               </tr>
             ))}
           </tbody>

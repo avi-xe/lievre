@@ -39,6 +39,7 @@ export function FeedPage() {
               {item.activity_type}
               {item.distance_meters != null && ` · ${(item.distance_meters / 1000).toFixed(1)} km`}
               {item.duration_seconds != null && ` · ${Math.floor(item.duration_seconds / 3600)}h ${Math.floor((item.duration_seconds % 3600) / 60)}m`}
+              {item.like_count != null && item.like_count > 0 && ` · ♥ ${item.like_count}`}
             </div>
           </div>
         ))

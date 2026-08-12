@@ -116,6 +116,19 @@ impl UserRepository {
         Ok(user)
     }
 
+    /// List all users (for discovery)
+    pub async fn list_all(&self, limit: i64, offset: i64) -> anyhow::Result<Vec<User>> {
+        let users = sqlx::query_as::<_, User>(
+            "SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        )
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(users)
+    }
+
     /// Update federation fields for a user
     pub async fn update_federation(
         &self,

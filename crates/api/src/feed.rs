@@ -14,7 +14,7 @@ pub async fn personal_feed(
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
     let activities = state
         .social
-        .get_feed(&user.id, 50, 0)
+        .get_feed_with_details(&user.id, 50, 0)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!(activities)))
@@ -26,7 +26,7 @@ pub async fn public_feed(
 ) -> Result<Json<Value>, (StatusCode, String)> {
     let activities = state
         .social
-        .get_public_feed(50, 0)
+        .get_public_feed_with_details(50, 0)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!(activities)))

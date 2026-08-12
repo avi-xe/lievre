@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 use chrono::{DateTime, Utc};
-use lievre_core::{ActivityType, CreateActivity, Visibility};
+use lievre_core::{ActivityType, CreateActivity, UpdateActivity, Visibility};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -37,6 +37,9 @@ pub async fn create_activity(
         "ride" => ActivityType::Ride,
         "run" => ActivityType::Run,
         "swim" => ActivityType::Swim,
+        "walk" => ActivityType::Walk,
+        "hike" => ActivityType::Hike,
+        "virtual-ride" => ActivityType::VirtualRide,
         other => {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -98,6 +101,28 @@ pub async fn list_activities(
     let activities = state
         .activity_repo
         .find_by_user_id(&user.id, 50, 0)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(json!(activities)))
+}
+
+/// GET /api/users/:id/activities — list a user's public activities (auth required)
+pub async fn list_user_activities(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(target_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let token = crate::auth::extract_token(&headers)?;
+    let _user = state
+        .auth
+        .verify_token(&token)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+
+    let activities = state
+        .activity_repo
+        .find_by_user_id(&target_id, 50, 0)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
@@ -166,4 +191,79 @@ pub async fn delete_activity(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(json!({ "deleted": true })))
+}
+
+#[derive(Deserialize)]
+pub struct UpdateActivityBody {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub visibility: Option<String>,
+    pub duration_seconds: Option<i64>,
+    pub distance_meters: Option<f64>,
+    pub elevation_gain_meters: Option<f64>,
+}
+
+/// PUT /api/activities/:id — update an activity (auth required, must be owner)
+pub async fn update_activity(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(id): Path<String>,
+    Json(body): Json<UpdateActivityBody>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let token = crate::auth::extract_token(&headers)?;
+    let user = state
+        .auth
+        .verify_token(&token)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+
+    let activity = state
+        .activity_repo
+        .find_by_id(&id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    match &activity {
+        Some(a) => {
+            if a.user_id != user.id {
+                return Err((StatusCode::FORBIDDEN, "Not your activity".to_string()));
+            }
+        }
+        None => {
+            return Err((StatusCode::NOT_FOUND, "Activity not found".to_string()));
+        }
+    }
+
+    let visibility = match body.visibility.as_deref() {
+        Some("public") => Some(Visibility::Public),
+        Some("private") => Some(Visibility::Private),
+        Some("followers") => Some(Visibility::Followers),
+        Some(other) => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                format!("Invalid visibility: {other}"),
+            ))
+        }
+        None => None,
+    };
+
+    let update = UpdateActivity {
+        title: body.title,
+        description: body.description,
+        duration_seconds: body.duration_seconds,
+        distance_meters: body.distance_meters,
+        elevation_gain_meters: body.elevation_gain_meters,
+        visibility,
+    };
+
+    let updated = state
+        .activity_repo
+        .update(&id, update)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    match updated {
+        Some(a) => Ok(Json(json!(a))),
+        None => Err((StatusCode::NOT_FOUND, "Activity not found".to_string())),
+    }
 }

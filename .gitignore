@@ -38,3 +38,9 @@ logs/
 *.profraw
 *.profdata
 lcov.info
+
+# E2E tests
+e2e/node_modules/
+e2e/playwright/
+e2e/test-results/
+e2e/playwright-report/

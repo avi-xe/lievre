@@ -4,14 +4,17 @@ mod federation;
 mod feed;
 mod geojson;
 mod import;
+mod notifications;
 mod social;
+mod worker;
 
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use lievre_core::{
-    ActivityRepository, AuthService, RouteRepository, SocialRepository, UserRepository,
+    ActivityRepository, AuthService, JobRepository, NotificationRepository, RouteRepository,
+    SocialRepository, UserRepository,
 };
 use lievre_federation::config::FederationDb;
 use tower_http::trace::TraceLayer;
@@ -24,6 +27,8 @@ pub struct AppState {
     pub activity_repo: ActivityRepository,
     pub route_repo: RouteRepository,
     pub social: SocialRepository,
+    pub notification_repo: NotificationRepository,
+    pub job_repo: JobRepository,
     pub fed_db: FederationDb,
 }
 
@@ -60,6 +65,12 @@ async fn main() -> anyhow::Result<()> {
     // Social repository
     let social = SocialRepository::new(pool.clone());
 
+    // Notification repository
+    let notification_repo = NotificationRepository::new(pool.clone());
+
+    // Job repository
+    let job_repo = JobRepository::new(pool.clone());
+
     // Federation database
     let domain = std::env::var("DOMAIN").unwrap_or_else(|_| "localhost".to_string());
     let scheme = std::env::var("SCHEME").unwrap_or_else(|_| "http".to_string());
@@ -71,6 +82,8 @@ async fn main() -> anyhow::Result<()> {
         activity_repo,
         route_repo,
         social,
+        notification_repo,
+        job_repo,
         fed_db,
     };
 
@@ -82,11 +95,18 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/auth/register", post(auth::register))
         .route("/api/auth/login", post(auth::login))
         .route("/api/users/me", get(auth::get_current_user))
+        .route("/api/users/:id", get(auth::get_user))
+        .route("/api/users", get(auth::list_users))
         // Activities CRUD
         .route("/api/activities", post(activities::create_activity))
         .route("/api/activities", get(activities::list_activities))
+        .route(
+            "/api/users/:id/activities",
+            get(activities::list_user_activities),
+        )
         .route("/api/activities/:id", get(activities::get_activity))
         .route("/api/activities/:id", delete(activities::delete_activity))
+        .route("/api/activities/:id", put(activities::update_activity))
         .route(
             "/api/activities/:id/geojson",
             get(geojson::get_activity_geojson),
@@ -94,16 +114,29 @@ async fn main() -> anyhow::Result<()> {
         // Social
         .route("/api/users/:id/follow", post(social::follow_user))
         .route("/api/users/:id/follow", delete(social::unfollow_user))
+        .route("/api/users/:id/follow-status", get(social::follow_status))
         .route("/api/users/:id/followers", get(social::get_followers))
         .route("/api/users/:id/following", get(social::get_following))
         .route("/api/activities/:id/like", post(social::like_activity))
         .route("/api/activities/:id/like", delete(social::unlike_activity))
+        .route("/api/activities/:id/likes", get(social::get_likes))
         .route("/api/activities/:id/comments", get(social::get_comments))
         .route("/api/activities/:id/comments", post(social::add_comment))
         .route("/api/comments/:id", delete(social::delete_comment))
         // Feed
         .route("/api/feed", get(feed::personal_feed))
         .route("/api/feed/public", get(feed::public_feed))
+        // Notifications
+        .route("/api/notifications", get(notifications::list_notifications))
+        .route("/api/notifications/:id/read", put(notifications::mark_read))
+        .route(
+            "/api/notifications/read-all",
+            put(notifications::mark_all_read),
+        )
+        .route(
+            "/api/notifications/:id",
+            delete(notifications::delete_notification),
+        )
         // Federation
         .route("/.well-known/webfinger", get(federation::webfinger))
         .route("/users/:username", get(federation::actor))
@@ -124,6 +157,12 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", addr, port)).await?;
 
     tracing::info!("Starting Lièvre on {}:{}", addr, port);
+
+    // Spawn background worker
+    let worker_pool = pool.clone();
+    tokio::spawn(async move {
+        worker::run_worker(worker_pool, 5000).await;
+    });
 
     axum::serve(listener, app).await?;
 

@@ -72,13 +72,31 @@ impl RouteRepository {
     pub async fn to_geojson(&self, route: &Route) -> anyhow::Result<serde_json::Value> {
         let coordinates: Vec<Vec<f64>> = serde_json::from_str(&route.coordinates)?;
 
+        // Merge elevation_data into coordinate arrays when available,
+        // producing [lon, lat, ele] for each point.
+        let merged: Vec<Vec<f64>> = if let Some(ele_json) = &route.elevation_data {
+            let elevations: Vec<f64> = serde_json::from_str(ele_json)?;
+            coordinates
+                .into_iter()
+                .enumerate()
+                .map(|(i, mut coord)| {
+                    if let Some(&ele) = elevations.get(i) {
+                        coord.push(ele);
+                    }
+                    coord
+                })
+                .collect()
+        } else {
+            coordinates
+        };
+
         let geojson = serde_json::json!({
             "type": "FeatureCollection",
             "features": [{
                 "type": "Feature",
                 "geometry": {
                     "type": "LineString",
-                    "coordinates": coordinates
+                    "coordinates": merged
                 },
                 "properties": {}
             }]

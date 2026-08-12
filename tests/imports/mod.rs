@@ -41,9 +41,11 @@ async fn test_import_gpx_creates_activity() {
         .unwrap();
     assert_eq!(resp.status(), 200);
     let geo: Value = resp.json().await.unwrap();
-    assert_eq!(geo["type"].as_str().unwrap(), "Feature");
-    assert_eq!(geo["geometry"]["type"].as_str().unwrap(), "LineString");
-    let coords = geo["geometry"]["coordinates"].as_array().unwrap();
+    assert_eq!(geo["type"].as_str().unwrap(), "FeatureCollection");
+    let feature = &geo["features"][0];
+    assert_eq!(feature["type"].as_str().unwrap(), "Feature");
+    assert_eq!(feature["geometry"]["type"].as_str().unwrap(), "LineString");
+    let coords = feature["geometry"]["coordinates"].as_array().unwrap();
     assert_eq!(coords.len(), 3, "Should have 3 track points");
 
     delete_activity(&client, &token, &activity_id).await;

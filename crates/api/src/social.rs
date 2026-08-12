@@ -35,6 +35,15 @@ pub async fn follow_user(
         .follow(&user.id, &target_id)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify the target user (ignore self-follows)
+    if user.id != target_id {
+        let _ = state
+            .notification_repo
+            .create(&target_id, &user.id, "follow", "user", &user.id, None)
+            .await;
+    }
+
     Ok(Json(json!({ "ok": true })))
 }
 
@@ -53,6 +62,21 @@ pub async fn unfollow_user(
     Ok(Json(json!({ "ok": true })))
 }
 
+/// GET /api/users/:id/follow-status — check if current user follows target
+pub async fn follow_status(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(target_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let user = auth_user(&state, &headers).await?;
+    let following = state
+        .social
+        .is_following(&user.id, &target_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(json!({ "is_following": following })))
+}
+
 // ============================================================
 // LIKE
 // ============================================================
@@ -69,6 +93,24 @@ pub async fn like_activity(
         .like(&activity_id, &user.id)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify activity owner (ignore self-likes)
+    if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {
+        if activity.user_id != user.id {
+            let _ = state
+                .notification_repo
+                .create(
+                    &activity.user_id,
+                    &user.id,
+                    "like",
+                    "activity",
+                    &activity_id,
+                    None,
+                )
+                .await;
+        }
+    }
+
     Ok(Json(json!({ "ok": true })))
 }
 
@@ -154,6 +196,29 @@ pub async fn add_comment(
         .add_comment(&activity_id, &user.id, &body.content)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify activity owner (ignore self-comments)
+    if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {
+        if activity.user_id != user.id {
+            let preview = if body.content.len() > 100 {
+                format!("{}…", &body.content[..100])
+            } else {
+                body.content.clone()
+            };
+            let _ = state
+                .notification_repo
+                .create(
+                    &activity.user_id,
+                    &user.id,
+                    "comment",
+                    "activity",
+                    &activity_id,
+                    Some(&preview),
+                )
+                .await;
+        }
+    }
+
     Ok(Json(json!(comment)))
 }
 
@@ -170,4 +235,22 @@ pub async fn delete_comment(
         .await
         .map_err(|e| (StatusCode::FORBIDDEN, e.to_string()))?;
     Ok(Json(json!({ "ok": true })))
+}
+
+/// GET /api/activities/:id/likes — list who liked an activity
+pub async fn get_likes(
+    State(state): State<crate::AppState>,
+    Path(activity_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let likes = state
+        .social
+        .get_likes(&activity_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let count = state
+        .social
+        .get_like_count(&activity_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(json!({ "likes": likes, "count": count })))
 }
