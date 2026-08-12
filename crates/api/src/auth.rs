@@ -1,4 +1,4 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{extract::{Path, State}, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -148,6 +148,34 @@ pub async fn get_current_user(
         .verify_token(&token)
         .await
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+
+    Ok(Json(UserResponse {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+    }))
+}
+
+/// GET /api/users/:id — get a user by ID (auth required)
+pub async fn get_user(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(user_id): Path<String>,
+) -> Result<Json<UserResponse>, (StatusCode, String)> {
+    let token = extract_token(&headers)?;
+    let _user = state
+        .auth
+        .verify_token(&token)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+
+    let user = state
+        .auth
+        .user_repo()
+        .find_by_id(&user_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
 
     Ok(Json(UserResponse {
         id: user.id,
