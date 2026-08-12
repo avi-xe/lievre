@@ -7,7 +7,7 @@ mod import;
 mod social;
 
 use axum::{
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use lievre_core::{
@@ -87,6 +87,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/activities", get(activities::list_activities))
         .route("/api/activities/:id", get(activities::get_activity))
         .route("/api/activities/:id", delete(activities::delete_activity))
+        .route("/api/activities/:id", put(activities::update_activity))
         .route(
             "/api/activities/:id/geojson",
             get(geojson::get_activity_geojson),
@@ -98,6 +99,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/users/:id/following", get(social::get_following))
         .route("/api/activities/:id/like", post(social::like_activity))
         .route("/api/activities/:id/like", delete(social::unlike_activity))
+        .route("/api/activities/:id/likes", get(social::get_likes))
         .route("/api/activities/:id/comments", get(social::get_comments))
         .route("/api/activities/:id/comments", post(social::add_comment))
         .route("/api/comments/:id", delete(social::delete_comment))

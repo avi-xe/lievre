@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../contexts/useAuth';
 import { ActivityMap } from '../components/ActivityMap';
@@ -17,6 +17,16 @@ export function ActivityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const loadLikes = async (activityId: string) => {
+    try {
+      const data = await apiFetch<{ count: number; liked: boolean }>(`/api/activities/${activityId}/likes`);
+      setLikeCount(data.count);
+      setLiked(data.liked);
+    } catch {
+      // likes endpoint may not exist yet
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     Promise.all([
@@ -26,6 +36,7 @@ export function ActivityDetailPage() {
       .then(([act, cmts]) => {
         setActivity(act);
         setComments(cmts);
+        loadLikes(id);
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
@@ -41,13 +52,10 @@ export function ActivityDetailPage() {
     if (!id) return;
     if (liked) {
       await apiFetch(`/api/activities/${id}/like`, { method: 'DELETE' });
-      setLiked(false);
-      setLikeCount(c => c - 1);
     } else {
       await apiFetch(`/api/activities/${id}/like`, { method: 'POST' });
-      setLiked(true);
-      setLikeCount(c => c + 1);
     }
+    loadLikes(id);
   };
 
   const handleComment = async (e: React.FormEvent) => {
@@ -59,6 +67,12 @@ export function ActivityDetailPage() {
     });
     setComments([...comments, comment]);
     setCommentText('');
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Delete this comment?')) return;
+    await apiFetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+    setComments(prev => prev.filter(c => c.id !== commentId));
   };
 
   if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
@@ -96,16 +110,32 @@ export function ActivityDetailPage() {
           {liked ? '♥ Liked' : '♡ Like'} {likeCount > 0 && `(${likeCount})`}
         </button>
         {isOwner && (
-          <button onClick={handleDelete} style={{ color: 'red' }}>Delete</button>
+          <>
+            <Link to={`/activities/${id}/edit`} style={{ padding: '4px 12px', border: '1px solid #333', borderRadius: 4, textDecoration: 'none', color: '#333' }}>
+              Edit
+            </Link>
+            <button onClick={handleDelete} style={{ color: 'red' }}>Delete</button>
+          </>
         )}
       </div>
 
       <h3>Comments</h3>
       <div style={{ marginBottom: 10 }}>
         {comments.map(c => (
-          <div key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee' }}>
-            <strong>{c.username}</strong> · {new Date(c.created_at).toLocaleString()}
-            <p>{c.content}</p>
+          <div key={c.id} style={{ padding: '8px 0', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <strong>{c.username}</strong> · {new Date(c.created_at).toLocaleString()}
+              <p>{c.content}</p>
+            </div>
+            {user?.id === c.user_id && (
+              <button
+                onClick={() => handleDeleteComment(c.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: 12 }}
+                title="Delete comment"
+              >
+                ✕
+              </button>
+            )}
           </div>
         ))}
       </div>

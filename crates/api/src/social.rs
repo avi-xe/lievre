@@ -171,3 +171,21 @@ pub async fn delete_comment(
         .map_err(|e| (StatusCode::FORBIDDEN, e.to_string()))?;
     Ok(Json(json!({ "ok": true })))
 }
+
+/// GET /api/activities/:id/likes — list who liked an activity
+pub async fn get_likes(
+    State(state): State<crate::AppState>,
+    Path(activity_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let likes = state
+        .social
+        .get_likes(&activity_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let count = state
+        .social
+        .get_like_count(&activity_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(json!({ "likes": likes, "count": count })))
+}

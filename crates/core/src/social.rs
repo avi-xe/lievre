@@ -27,6 +27,26 @@ pub struct Comment {
     pub created_at: String,
 }
 
+/// Enriched activity returned by feed queries, including the author's
+/// username and the number of likes on the activity.
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct FeedActivity {
+    pub id: String,
+    pub user_id: String,
+    pub username: String,
+    pub activity_type: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub started_at: String,
+    pub duration_seconds: Option<i64>,
+    pub distance_meters: Option<f64>,
+    pub elevation_gain_meters: Option<f64>,
+    pub visibility: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub like_count: i64,
+}
+
 #[derive(Debug, Clone)]
 pub struct SocialRepository {
     pool: SqlitePool,
@@ -305,6 +325,62 @@ impl SocialRepository {
             "SELECT * FROM activities
              WHERE visibility = 'public'
              ORDER BY started_at DESC
+             LIMIT ? OFFSET ?",
+        )
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(activities)
+    }
+
+    /// Personal feed enriched with author username and like count.
+    pub async fn get_feed_with_details(
+        &self,
+        user_id: &str,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<FeedActivity>, anyhow::Error> {
+        let activities = sqlx::query_as::<_, FeedActivity>(
+            "SELECT a.id, a.user_id, u.username, a.activity_type, a.title,
+                    a.description, a.started_at, a.duration_seconds,
+                    a.distance_meters, a.elevation_gain_meters, a.visibility,
+                    a.created_at, a.updated_at,
+                    (SELECT COUNT(*) FROM likes l WHERE l.activity_id = a.id) AS like_count
+             FROM activities a
+             INNER JOIN follows f ON a.user_id = f.following_id
+             INNER JOIN users u ON a.user_id = u.id
+             WHERE f.follower_id = ? AND f.status = 'accepted'
+             AND a.visibility IN ('public', 'followers')
+             ORDER BY a.started_at DESC
+             LIMIT ? OFFSET ?",
+        )
+        .bind(user_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(activities)
+    }
+
+    /// Public feed enriched with author username and like count.
+    pub async fn get_public_feed_with_details(
+        &self,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<FeedActivity>, anyhow::Error> {
+        let activities = sqlx::query_as::<_, FeedActivity>(
+            "SELECT a.id, a.user_id, u.username, a.activity_type, a.title,
+                    a.description, a.started_at, a.duration_seconds,
+                    a.distance_meters, a.elevation_gain_meters, a.visibility,
+                    a.created_at, a.updated_at,
+                    (SELECT COUNT(*) FROM likes l WHERE l.activity_id = a.id) AS like_count
+             FROM activities a
+             INNER JOIN users u ON a.user_id = u.id
+             WHERE a.visibility = 'public'
+             ORDER BY a.started_at DESC
              LIMIT ? OFFSET ?",
         )
         .bind(limit)

@@ -18,6 +18,6 @@ pub use import::tcx::TcxParser;
 pub use job::{Job, JobRepository, JobStatus, JobType};
 pub use privacy::{PrivacyService, PrivacyZone};
 pub use route::{CreateRoute, Route, RouteRepository};
-pub use social::{Comment, Follow, Like, SocialRepository};
+pub use social::{Comment, FeedActivity, Follow, Like, SocialRepository};
 pub use stats::{ActivityStats, StatsComputer};
 pub use user::{User, UserRepository};
