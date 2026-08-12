@@ -30,4 +30,5 @@ export interface Comment {
 
 export interface FeedItem extends Activity {
   username?: string;
+  like_count?: number;
 }

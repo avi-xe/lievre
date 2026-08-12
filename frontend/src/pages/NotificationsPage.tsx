@@ -40,8 +40,8 @@ export function NotificationsPage() {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const data = await apiFetch<Notification[]>('/api/notifications');
-      setNotifications(data);
+      const data = await apiFetch<{ notifications: Notification[]; unread_count: number }>('/api/notifications');
+      setNotifications(data.notifications || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load notifications');
     } finally {
