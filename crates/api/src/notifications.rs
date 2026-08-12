@@ -1,9 +1,9 @@
+use axum::http::StatusCode;
 use axum::{
     extract::{Path, State},
     http::header::HeaderMap,
     Json,
 };
-use axum::http::StatusCode;
 use serde_json::{json, Value};
 
 /// Extract user from Bearer token
@@ -14,13 +14,21 @@ async fn auth_user(
     let auth_header = headers
         .get("Authorization")
         .and_then(|v| v.to_str().ok())
-        .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header".to_string()))?;
+        .ok_or((
+            StatusCode::UNAUTHORIZED,
+            "Missing Authorization header".to_string(),
+        ))?;
 
-    let token = auth_header
-        .strip_prefix("Bearer ")
-        .ok_or((StatusCode::UNAUTHORIZED, "Invalid Authorization header".to_string()))?;
+    let token = auth_header.strip_prefix("Bearer ").ok_or((
+        StatusCode::UNAUTHORIZED,
+        "Invalid Authorization header".to_string(),
+    ))?;
 
-    state.auth.verify_token(token).await.map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
+    state
+        .auth
+        .verify_token(token)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
 }
 
 /// GET /api/notifications — list notifications for current user

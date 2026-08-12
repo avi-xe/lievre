@@ -75,11 +75,10 @@ export function ElevationProfile({ activityId, height = '200px' }: { activityId:
           let nearest = points[0];
           let minDist = Infinity;
           points.forEach((p) => {
-            const px = padL + (p.distance / maxDist) * (w - padL);
-            const d = Math.abs(px - mouseX);
+            const ptx = padL + (p.distance / maxDist) * (w - padL);
+            const d = Math.abs(ptx - mouseX);
             if (d < minDist) { minDist = d; nearest = p; }
           });
-          const px = padL + (nearest.distance / maxDist) * (w - padL);
           const py = h - padB - ((nearest.elevation - minElev) / elevRange) * (h - padB);
           setHovered({ x: e.clientX, y: rect.top + (py / h) * rect.height, distance: nearest.distance, elevation: nearest.elevation });
         }}

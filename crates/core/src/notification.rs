@@ -52,10 +52,11 @@ impl NotificationRepository {
         .execute(&self.pool)
         .await?;
 
-        let notification = sqlx::query_as::<_, Notification>("SELECT * FROM notifications WHERE id = ?")
-            .bind(&id)
-            .fetch_one(&self.pool)
-            .await?;
+        let notification =
+            sqlx::query_as::<_, Notification>("SELECT * FROM notifications WHERE id = ?")
+                .bind(&id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(notification)
     }
@@ -85,43 +86,33 @@ impl NotificationRepository {
         notification_id: &str,
         user_id: &str,
     ) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?",
-        )
-        .bind(notification_id)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query("UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?")
+            .bind(notification_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
 
     /// Mark all notifications as read for a user
-    pub async fn mark_all_read(
-        &self,
-        user_id: &str,
-    ) -> Result<i64, anyhow::Error> {
-        let result = sqlx::query(
-            "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0",
-        )
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
+    pub async fn mark_all_read(&self, user_id: &str) -> Result<i64, anyhow::Error> {
+        let result =
+            sqlx::query("UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0")
+                .bind(user_id)
+                .execute(&self.pool)
+                .await?;
 
         Ok(result.rows_affected() as i64)
     }
 
     /// Count unread notifications
-    pub async fn unread_count(
-        &self,
-        user_id: &str,
-    ) -> Result<i64, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0",
-        )
-        .bind(user_id)
-        .fetch_one(&self.pool)
-        .await?;
+    pub async fn unread_count(&self, user_id: &str) -> Result<i64, anyhow::Error> {
+        let result: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0")
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(result.0)
     }
@@ -132,13 +123,11 @@ impl NotificationRepository {
         notification_id: &str,
         user_id: &str,
     ) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "DELETE FROM notifications WHERE id = ? AND user_id = ?",
-        )
-        .bind(notification_id)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM notifications WHERE id = ? AND user_id = ?")
+            .bind(notification_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -199,8 +188,19 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
-        repo.create("user1", "user2", "like", "activity", "act1", Some("Nice ride!")).await.unwrap();
+        repo.create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
+        repo.create(
+            "user1",
+            "user2",
+            "like",
+            "activity",
+            "act1",
+            Some("Nice ride!"),
+        )
+        .await
+        .unwrap();
 
         let notifications = repo.list("user1", 10, 0).await.unwrap();
         assert_eq!(notifications.len(), 2);
@@ -214,7 +214,10 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        let n = repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
+        let n = repo
+            .create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
         assert!(!n.read);
 
         let marked = repo.mark_read(&n.id, "user1").await.unwrap();
@@ -229,8 +232,12 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
-        repo.create("user1", "user2", "like", "activity", "act1", None).await.unwrap();
+        repo.create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
+        repo.create("user1", "user2", "like", "activity", "act1", None)
+            .await
+            .unwrap();
 
         let count = repo.mark_all_read("user1").await.unwrap();
         assert_eq!(count, 2);
@@ -244,8 +251,12 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
-        repo.create("user1", "user2", "like", "activity", "act1", None).await.unwrap();
+        repo.create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
+        repo.create("user1", "user2", "like", "activity", "act1", None)
+            .await
+            .unwrap();
 
         let unread = repo.unread_count("user1").await.unwrap();
         assert_eq!(unread, 2);
@@ -262,7 +273,10 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        let n = repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
+        let n = repo
+            .create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
 
         let deleted = repo.delete(&n.id, "user1").await.unwrap();
         assert!(deleted);
@@ -276,7 +290,10 @@ mod tests {
         let pool = setup_db().await;
         let repo = NotificationRepository::new(pool);
 
-        let n = repo.create("user1", "user2", "follow", "user", "user2", None).await.unwrap();
+        let n = repo
+            .create("user1", "user2", "follow", "user", "user2", None)
+            .await
+            .unwrap();
 
         // user2 trying to mark user1's notification
         let marked = repo.mark_read(&n.id, "user2").await.unwrap();
