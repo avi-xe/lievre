@@ -31,6 +31,7 @@ export function CreateActivityPage() {
         method: 'POST',
         body: JSON.stringify({
           ...form,
+          started_at: form.started_at ? `${form.started_at}:00Z` : form.started_at,
           duration_seconds: form.duration_seconds ? parseInt(form.duration_seconds) : null,
           distance_meters: form.distance_meters ? parseFloat(form.distance_meters) : null,
           elevation_gain_meters: form.elevation_gain_meters ? parseFloat(form.elevation_gain_meters) : null,
