@@ -11,6 +11,7 @@ import { CreateActivityPage } from './pages/CreateActivityPage';
 import { FeedPage } from './pages/FeedPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { UsersPage } from './pages/UsersPage';
 
 function NavBar() {
   const { isAuthenticated, logout } = useAuth();
@@ -20,6 +21,7 @@ function NavBar() {
       <Link to="/feed">Feed</Link>
       <Link to="/">Activities</Link>
       {isAuthenticated && <Link to="/activities/new">+ New</Link>}
+      {isAuthenticated && <Link to="/users">Users</Link>}
       {isAuthenticated && <Link to="/notifications">Notifications</Link>}
       <div style={{ flex: 1 }} />
       {isAuthenticated ? (
@@ -46,6 +48,7 @@ function App() {
             <Route path="/activities/:id" element={<ActivityDetailPage />} />
             <Route path="/activities/:id/edit" element={<ActivityEditPage />} />
             <Route path="/users/:id" element={<ProfilePage />} />
+            <Route path="/users" element={<UsersPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
         </Routes>

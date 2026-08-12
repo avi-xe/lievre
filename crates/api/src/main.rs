@@ -95,9 +95,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/auth/register", post(auth::register))
         .route("/api/auth/login", post(auth::login))
         .route("/api/users/me", get(auth::get_current_user))
+        .route("/api/users", get(auth::list_users))
         // Activities CRUD
         .route("/api/activities", post(activities::create_activity))
         .route("/api/activities", get(activities::list_activities))
+        .route("/api/users/:id/activities", get(activities::list_user_activities))
         .route("/api/activities/:id", get(activities::get_activity))
         .route("/api/activities/:id", delete(activities::delete_activity))
         .route("/api/activities/:id", put(activities::update_activity))

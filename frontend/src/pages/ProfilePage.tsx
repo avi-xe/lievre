@@ -20,9 +20,9 @@ export function ProfilePage() {
       .then(setProfile)
       .catch(() => {})
       .finally(() => setLoading(false));
-    // Fetch activities - use the list endpoint and filter
-    apiFetch<Activity[]>('/api/activities')
-      .then(acts => setActivities(acts.filter(a => a.user_id === id)))
+    // Fetch that user's activities
+    apiFetch<Activity[]>(`/api/users/${id}/activities`)
+      .then(setActivities)
       .catch(() => {});
     // Fetch follow status if viewing another user's profile
     if (currentUser && currentUser.id !== id) {

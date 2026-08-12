@@ -107,6 +107,28 @@ pub async fn list_activities(
     Ok(Json(json!(activities)))
 }
 
+/// GET /api/users/:id/activities — list a user's public activities (auth required)
+pub async fn list_user_activities(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(target_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let token = crate::auth::extract_token(&headers)?;
+    let _user = state
+        .auth
+        .verify_token(&token)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+
+    let activities = state
+        .activity_repo
+        .find_by_user_id(&target_id, 50, 0)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(json!(activities)))
+}
+
 /// GET /api/activities/:id — get a single activity (auth required)
 pub async fn get_activity(
     State(state): State<crate::AppState>,
