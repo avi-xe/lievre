@@ -52,6 +52,15 @@ pub async fn import_gpx(
                 .parse(&content)
                 .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
 
+            tracing::info!(
+                "GPX parsed: name={:?}, coords={}, elevation={}, distance={:?}, elevation_gain={:?}",
+                track.name,
+                track.coordinates.len(),
+                track.elevation_data.len(),
+                track.distance_meters,
+                track.elevation_gain_meters
+            );
+
             let create_activity = parser.to_create_activity(&track);
             let activity = state
                 .activity_repo
