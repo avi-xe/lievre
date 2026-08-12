@@ -35,13 +35,13 @@ services:
       retries: 15
 
   caddy:
-    image: caddy:2-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./frontend/dist:/app/frontend/dist:ro
       - caddydata:/data
       - caddyconfig:/config
     depends_on:

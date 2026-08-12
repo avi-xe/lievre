@@ -6,9 +6,11 @@ export async function apiFetch<T = unknown>(path: string, options?: RequestInit)
     ...((options?.headers as Record<string, string>) || {}),
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // Don't set Content-Type for non-JSON bodies
-  if (!options?.body || options.body instanceof URLSearchParams) {
-    headers['Content-Type'] = 'application/json';
+  // Set Content-Type for JSON bodies (string = JSON, not FormData/URLSearchParams)
+  if (!options?.headers || !('Content-Type' in (options.headers as Record<string, string>))) {
+    if (typeof options?.body === 'string') {
+      headers['Content-Type'] = 'application/json';
+    }
   }
   const res = await fetch(`${BASE}${path}`, { ...options, headers });
   if (res.status === 401) {

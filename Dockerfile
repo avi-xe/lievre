@@ -1,15 +1,3 @@
-# Stage 1: Build frontend
-FROM node:20-alpine AS frontend-builder
-
-WORKDIR /app/frontend
-
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
-
-COPY frontend/ ./
-RUN npm run build
-
-# Stage 2: Build Rust backend with cargo-chef
 FROM rust:1.97-slim-bookworm AS chef
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
@@ -44,8 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy backend binary — from the cp destination, NOT /app/target (that's a cache mount)
 COPY --from=builder /usr/local/bin/lievre /usr/local/bin/
-
-COPY --from=frontend-builder /app/frontend/dist /app/static
 
 RUN mkdir -p /app/data
 
