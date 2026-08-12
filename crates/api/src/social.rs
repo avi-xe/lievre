@@ -88,11 +88,65 @@ pub async fn like_activity(
     Path(activity_id): Path<String>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
     let user = auth_user(&state, &headers).await?;
-    state
+    
+    // Check if this is a remote activity
+    let is_remote = state
         .social
-        .like(&activity_id, &user.id)
+        .is_remote_activity(&activity_id)
         .await
-        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if is_remote {
+        // For remote activities, we need to send a Like activity to the remote inbox
+        // First, get the remote exercise URL
+        let exercise_url = state
+            .social
+            .get_remote_exercise_url(&activity_id)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+            .ok_or_else(|| (StatusCode::NOT_FOUND, "Remote activity not found".to_string()))?;
+
+        // Create the local like record (for tracking)
+        let like = state
+            .social
+            .like(&activity_id, &user.id)
+            .await
+            .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+        // Build the Like activity for federation
+        let base_url = state.fed_db.base_url();
+        let like_id = format!("{}/likes/{}", base_url, like.id);
+        let actor_url = state.fed_db.actor_url(&user.username).to_string();
+        
+        let like_activity = json!({
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "type": "Like",
+            "id": like_id,
+            "actor": actor_url,
+            "object": exercise_url,
+        });
+
+        // TODO: Determine the remote inbox URL from the exercise URL
+        // For now, we'll log the activity that would be sent
+        tracing::info!(
+            "Would send Like activity to remote inbox for exercise {}: {}",
+            exercise_url,
+            like_activity
+        );
+
+        // In a real implementation, we would:
+        // 1. Fetch the remote actor's inbox URL
+        // 2. Sign the activity with HTTP Signatures
+        // 3. Send it to the remote inbox
+        // For now, we just log it
+    } else {
+        // For local activities, just create the like record
+        state
+            .social
+            .like(&activity_id, &user.id)
+            .await
+            .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    }
 
     // Notify activity owner (ignore self-likes)
     if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {

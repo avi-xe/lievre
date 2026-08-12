@@ -325,24 +325,64 @@ pub async fn inbox(
             Ok(StatusCode::ACCEPTED)
         }
         "Undo" => {
-            // Handle undo (e.g., unfollow)
+            // Handle undo (e.g., unfollow, undo like)
             let object = activity.get("object").cloned().unwrap_or(json!({}));
-            if object.get("type").and_then(|t| t.as_str()) == Some("Follow") {
-                let follower_url = object.get("actor").and_then(|a| a.as_str()).unwrap_or("");
+            let actor_url = activity.get("actor").and_then(|a| a.as_str()).unwrap_or("");
 
-                if !follower_url.is_empty() {
-                    sqlx::query(
-                        "DELETE FROM actor_follows WHERE follower_actor_url = ? AND following_actor_url = ?",
-                    )
-                    .bind(follower_url)
-                    .bind(db.actor_url(&username).to_string())
-                    .execute(&db.pool)
-                    .await
-                    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+            match object.get("type").and_then(|t| t.as_str()) {
+                Some("Follow") => {
+                    let follower_url = object.get("actor").and_then(|a| a.as_str()).unwrap_or("");
 
-                    tracing::info!("Removed follow from {}", follower_url);
+                    if !follower_url.is_empty() {
+                        sqlx::query(
+                            "DELETE FROM actor_follows WHERE follower_actor_url = ? AND following_actor_url = ?",
+                        )
+                        .bind(follower_url)
+                        .bind(db.actor_url(&username).to_string())
+                        .execute(&db.pool)
+                        .await
+                        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                        tracing::info!("Removed follow from {}", follower_url);
+                    }
+                }
+                Some("Like") => {
+                    // Handle undo like
+                    let like_object_url = object.get("object").and_then(|o| o.as_str()).unwrap_or("");
+
+                    if !actor_url.is_empty() && !like_object_url.is_empty() {
+                        // Extract activity ID from object URL
+                        let activity_id = like_object_url
+                            .rsplit('/')
+                            .next()
+                            .unwrap_or("");
+
+                        // Remove the remote like
+                        let result = sqlx::query(
+                            "DELETE FROM likes WHERE remote_actor_url = ? AND activity_id = ?",
+                        )
+                        .bind(actor_url)
+                        .bind(activity_id)
+                        .execute(&db.pool)
+                        .await
+                        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                        if result.rows_affected() > 0 {
+                            tracing::info!("Removed remote like from {} on {}", actor_url, activity_id);
+                        } else {
+                            tracing::warn!(
+                                "No like found to remove from {} on {}",
+                                actor_url,
+                                activity_id
+                            );
+                        }
+                    }
+                }
+                _ => {
+                    tracing::warn!("Unknown undo object type: {:?}", object.get("type"));
                 }
             }
+
             Ok(StatusCode::ACCEPTED)
         }
         "Create" => {
@@ -435,6 +475,114 @@ pub async fn inbox(
                 .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
                 tracing::info!("Stored remote exercise {}", exercise_url);
+            }
+
+            Ok(StatusCode::ACCEPTED)
+        }
+        "Like" => {
+            // Handle like activity from remote user
+            let actor_url = activity.get("actor").and_then(|a| a.as_str()).unwrap_or("");
+            let object_url = activity.get("object").and_then(|o| o.as_str()).unwrap_or("");
+
+            if !actor_url.is_empty() && !object_url.is_empty() {
+                // Extract activity ID from object URL
+                let activity_id = object_url
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or("");
+
+                // Check if this is a local activity
+                let is_local = sqlx::query_as::<_, (i64,)>(
+                    "SELECT COUNT(*) FROM activities WHERE id = ?",
+                )
+                .bind(activity_id)
+                .fetch_one(&db.pool)
+                .await
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                if is_local.0 > 0 {
+                    // Store the remote like
+                    let like_id = uuid::Uuid::new_v4().to_string();
+                    let now = chrono::Utc::now().to_rfc3339();
+
+                    sqlx::query(
+                        "INSERT OR IGNORE INTO likes (id, activity_id, remote_actor_url, object_url, created_at)
+                         VALUES (?, ?, ?, ?, ?)",
+                    )
+                    .bind(&like_id)
+                    .bind(activity_id)
+                    .bind(actor_url)
+                    .bind(object_url)
+                    .bind(&now)
+                    .execute(&db.pool)
+                    .await
+                    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    // Create notification for activity owner
+                    let activity_owner = sqlx::query_as::<_, (String,)>(
+                        "SELECT user_id FROM activities WHERE id = ?",
+                    )
+                    .bind(activity_id)
+                    .fetch_optional(&db.pool)
+                    .await
+                    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                    if let Some((owner_id,)) = activity_owner {
+                        // Find or create remote user for notification
+                        let remote_user = sqlx::query_as::<_, lievre_core::user::User>(
+                            "SELECT * FROM users WHERE actor_url = ?",
+                        )
+                        .bind(actor_url)
+                        .fetch_optional(&db.pool)
+                        .await
+                        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                        let actor_user_id = if let Some(u) = remote_user {
+                            u.id
+                        } else {
+                            // Create a remote user for notifications
+                            let new_id = uuid::Uuid::new_v4().to_string();
+                            let remote_username = actor_url.rsplit('/').next().unwrap_or("remote");
+                            let remote_domain = actor_url.split("://").nth(1).unwrap_or("unknown");
+                            let email = format!("{}@{}", remote_username, remote_domain);
+
+                            sqlx::query(
+                                "INSERT INTO users (id, email, username, password_hash, actor_url, is_local)
+                                 VALUES (?, ?, ?, '', ?, 0)",
+                            )
+                            .bind(&new_id)
+                            .bind(&email)
+                            .bind(remote_username)
+                            .bind(actor_url)
+                            .execute(&db.pool)
+                            .await
+                            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+                            new_id
+                        };
+
+                        // Create notification
+                        let _ = sqlx::query(
+                            "INSERT INTO notifications (id, user_id, actor_id, type, entity_type, entity_id, content, created_at)
+                             VALUES (?, ?, ?, 'like', 'activity', ?, ?, ?)",
+                        )
+                        .bind(uuid::Uuid::new_v4().to_string())
+                        .bind(&owner_id)
+                        .bind(&actor_user_id)
+                        .bind(activity_id)
+                        .bind(format!("{} liked your activity", actor_url.rsplit('/').next().unwrap_or("remote")))
+                        .bind(&now)
+                        .execute(&db.pool)
+                        .await;
+                    }
+
+                    tracing::info!("Stored remote like from {} on {}", actor_url, activity_id);
+                } else {
+                    tracing::warn!(
+                        "Received like for non-local activity: {}",
+                        object_url
+                    );
+                }
             }
 
             Ok(StatusCode::ACCEPTED)
