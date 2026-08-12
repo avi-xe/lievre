@@ -107,6 +107,7 @@ async fn main() -> anyhow::Result<()> {
         // Social
         .route("/api/users/:id/follow", post(social::follow_user))
         .route("/api/users/:id/follow", delete(social::unfollow_user))
+        .route("/api/users/:id/follow-status", get(social::follow_status))
         .route("/api/users/:id/followers", get(social::get_followers))
         .route("/api/users/:id/following", get(social::get_following))
         .route("/api/activities/:id/like", post(social::like_activity))

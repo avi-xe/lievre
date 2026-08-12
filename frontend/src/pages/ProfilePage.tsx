@@ -24,7 +24,13 @@ export function ProfilePage() {
     apiFetch<Activity[]>('/api/activities')
       .then(acts => setActivities(acts.filter(a => a.user_id === id)))
       .catch(() => {});
-  }, [id]);
+    // Fetch follow status if viewing another user's profile
+    if (currentUser && currentUser.id !== id) {
+      apiFetch<{ is_following: boolean }>(`/api/users/${id}/follow-status`)
+        .then(data => setIsFollowing(data.is_following))
+        .catch(() => {});
+    }
+  }, [id, currentUser]);
 
   const handleFollow = async () => {
     if (!id) return;

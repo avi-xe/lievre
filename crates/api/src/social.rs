@@ -62,6 +62,21 @@ pub async fn unfollow_user(
     Ok(Json(json!({ "ok": true })))
 }
 
+/// GET /api/users/:id/follow-status — check if current user follows target
+pub async fn follow_status(
+    State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
+    Path(target_id): Path<String>,
+) -> Result<Json<Value>, (StatusCode, String)> {
+    let user = auth_user(&state, &headers).await?;
+    let following = state
+        .social
+        .is_following(&user.id, &target_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(json!({ "is_following": following })))
+}
+
 // ============================================================
 // LIKE
 // ============================================================
