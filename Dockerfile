@@ -37,8 +37,9 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Stage 3: Runtime
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy backend binary — from the cp destination, NOT /app/target (that's a cache mount)
