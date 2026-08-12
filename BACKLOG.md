@@ -552,115 +552,109 @@ CREATE TABLE jobs (
 
 ---
 
-## Epic 7: PWA Frontend
+## Epic 7: Frontend
 
-> React-based Progressive Web App.
+> React functional UI — no design system, no PWA polish. Just working pages.
 
-### 7.1 PWA Setup
-**Priority:** P0 | **Estimate:** M
+### 7.1 App Shell & Routing
+**Priority:** P0 | **Estimate:** S
 
-**Story:** As a user, I want to install the app on my device so that I can access it like a native app.
+**Story:** As a developer, I want the app wired up with routing so that pages are navigable.
 
 **Acceptance Criteria:**
-- [ ] React + TypeScript + Vite
-- [ ] Service worker for offline support
-- [ ] Web app manifest with icons
-- [ ] Install prompt handling
-- [ ] Responsive design (mobile-first)
+- [x] react-router-dom with routes: /, /login, /register, /activities/new, /activities/:id, /feed, /users/:id
+- [x] Nav bar with: logo, Feed, Activities, +New, Login/Logout
+- [x] AuthProvider wrapping app
+- [x] ProtectedRoute component redirects unauthenticated users to /login
 
 ---
 
-### 7.2 Authentication UI
-**Priority:** P0 | **Estimate:** M
+### 7.2 API Client & Auth Context
+**Priority:** P0 | **Estimate:** S
+
+**Story:** As a developer, I want a fetch wrapper and auth state so that pages can talk to the backend.
+
+**Acceptance Criteria:**
+- [x] `apiFetch(path, opts)` auto-injects Authorization header from localStorage
+- [x] 401 response clears token and redirects to /login
+- [x] `apiUpload(path, file)` for multipart uploads
+- [x] AuthContext provides: user, token, login, register, logout, isAuthenticated
+- [x] On mount, restores session from localStorage via GET /api/users/me
+
+---
+
+### 7.3 Authentication Pages
+**Priority:** P0 | **Estimate:** S
 
 **Story:** As a user, I want to register and log in via the web interface.
 
 **Acceptance Criteria:**
-- [ ] Registration form (email, username, password)
-- [ ] Login form
-- [ ] JWT token storage
-- [ ] Protected routes
-- [ ] Logout
+- [x] LoginPage: email + password form → POST /api/auth/login → navigate to /
+- [x] RegisterPage: email + username + password form → POST /api/auth/register → navigate to /
+- [x] Error messages shown on form failure
+- [x] Logout clears token and redirects to /
 
 ---
 
-### 7.3 Activity List
+### 7.4 Activity List & Detail
 **Priority:** P0 | **Estimate:** M
 
-**Story:** As a user, I want to see my activities in a list so that I can browse my history.
+**Story:** As a user, I want to see my activities and their details.
 
 **Acceptance Criteria:**
-- [ ] List of activities with: title, type, date, distance, duration
-- [ ] Pagination
-- [ ] Filter by type
-- [ ] Link to activity detail
-
----
-
-### 7.4 Activity Detail
-**Priority:** P0 | **Estimate:** L
-
-**Story:** As a user, I want to see full details of an activity including map and stats.
-
-**Acceptance Criteria:**
-- [ ] Activity title, description, type, date
-- [ ] Map showing route (Leaflet)
-- [ ] Stats: distance, duration, elevation, speed
-- [ ] Like button with count
-- [ ] Comments section
-- [ ] Edit/delete buttons (owner only)
+- [x] ActivityListPage: fetches GET /api/activities, shows title, type, date, distance, duration
+- [x] Each activity links to /activities/:id
+- [x] ActivityDetailPage: shows full stats, Leaflet map of route, like button, comments section
+- [x] Delete button visible to owner only, calls DELETE /api/activities/:id
 
 ---
 
 ### 7.5 Activity Creation
+**Priority:** P0 | **Estimate:** S
+
+**Story:** As a user, I want to create activities manually or upload GPX files.
+
+**Acceptance Criteria:**
+- [x] CreateActivityPage: form with activity_type, title, started_at, duration, distance, elevation, visibility
+- [x] File upload input for GPX → POST /api/import/gpx
+- [x] On success navigates to the new activity's detail page
+
+---
+
+### 7.6 Feed
+**Priority:** P0 | **Estimate:** S
+
+**Story:** As a user, I want to see activities from other users.
+
+**Acceptance Criteria:**
+- [x] FeedPage: GET /api/feed (authed) or GET /api/feed/public (unauthed)
+- [x] Shows username, activity title, date, stats
+- [x] Each activity links to /activities/:id
+
+---
+
+### 7.7 User Profile & Social
 **Priority:** P0 | **Estimate:** M
 
-**Story:** As a user, I want to create activities manually or upload files.
+**Story:** As a user, I want to view profiles and follow other users.
 
 **Acceptance Criteria:**
-- [ ] Manual entry form (type, title, date, distance, duration)
-- [ ] File upload (drag & drop)
-- [ ] Progress indicator for upload
-- [ ] Redirect to activity detail on success
+- [x] ProfilePage: GET /api/users/:id, shows username and activity list
+- [x] Follow/unfollow button for other users (POST/DELETE /api/users/:id/follow)
+- [x] Like on activities (POST/DELETE /api/activities/:id/like)
+- [x] Comments on activities (GET/POST /api/activities/:id/comments)
 
 ---
 
-### 7.6 User Profile
-**Priority:** P0 | **Estimate:** M
+### 7.8 Map Components
+**Priority:** P0 | **Estimate:** S
 
-**Story:** As a user, I want to view and edit my profile.
-
-**Acceptance Criteria:**
-- [ ] Profile page with: display name, avatar, bio
-- [ ] Activity count, total distance
-- [ ] Edit profile form
-- [ ] Follow/unfollow button (for other users)
-
----
-
-### 7.7 Feed
-**Priority:** P0 | **Estimate:** L
-
-**Story:** As a user, I want to see a feed of activities from people I follow.
+**Story:** As a user, I want to see routes on a map and elevation profiles.
 
 **Acceptance Criteria:**
-- [ ] Feed page showing followed users' activities
-- [ ] Each item: user avatar, activity summary, map thumbnail
-- [ ] Like/comment actions
-- [ ] Infinite scroll or pagination
-
----
-
-### 7.8 Settings
-**Priority:** P1 | **Estimate:** M
-
-**Story:** As a user, I want to configure my account and preferences.
-
-**Acceptance Criteria:**
-- [ ] Profile settings (name, bio, avatar)
-- [ ] Privacy settings (default visibility, privacy zone)
-- [ ] Account settings (email, password)
-- [ ] Danger zone (delete account)
+- [x] ActivityMap: fetches GeoJSON, renders Leaflet map with route, auto-fits bounds
+- [x] ElevationProfile: SVG chart of elevation vs distance
+- [x] Both handle loading, error, and empty states
 
 ---
 
