@@ -35,6 +35,15 @@ pub async fn follow_user(
         .follow(&user.id, &target_id)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify the target user (ignore self-follows)
+    if user.id != target_id {
+        let _ = state
+            .notification_repo
+            .create(&target_id, &user.id, "follow", "user", &user.id, None)
+            .await;
+    }
+
     Ok(Json(json!({ "ok": true })))
 }
 
@@ -69,6 +78,24 @@ pub async fn like_activity(
         .like(&activity_id, &user.id)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify activity owner (ignore self-likes)
+    if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {
+        if activity.user_id != user.id {
+            let _ = state
+                .notification_repo
+                .create(
+                    &activity.user_id,
+                    &user.id,
+                    "like",
+                    "activity",
+                    &activity_id,
+                    None,
+                )
+                .await;
+        }
+    }
+
     Ok(Json(json!({ "ok": true })))
 }
 
@@ -154,6 +181,29 @@ pub async fn add_comment(
         .add_comment(&activity_id, &user.id, &body.content)
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+
+    // Notify activity owner (ignore self-comments)
+    if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {
+        if activity.user_id != user.id {
+            let preview = if body.content.len() > 100 {
+                format!("{}…", &body.content[..100])
+            } else {
+                body.content.clone()
+            };
+            let _ = state
+                .notification_repo
+                .create(
+                    &activity.user_id,
+                    &user.id,
+                    "comment",
+                    "activity",
+                    &activity_id,
+                    Some(&preview),
+                )
+                .await;
+        }
+    }
+
     Ok(Json(json!(comment)))
 }
 
