@@ -61,7 +61,9 @@ pub async fn import_gpx(
 
             if !track.coordinates.is_empty() {
                 let create_route = parser.to_create_route(&activity.id, &track);
-                let _ = state.route_repo.create(create_route).await;
+                if let Err(e) = state.route_repo.create(create_route).await {
+                    tracing::error!("Failed to create route for activity {}: {}", activity.id, e);
+                }
             }
 
             return Ok(Json(ImportResponse {
