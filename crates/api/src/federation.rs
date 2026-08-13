@@ -164,10 +164,7 @@ pub async fn exercise_route(
                 if activity.visibility == lievre_core::Visibility::Private {
                     // In production, verify the requester is the owner
                     // For now, we allow access but log the attempt
-                    tracing::warn!(
-                        "Private route access attempt for exercise {}",
-                        exercise_id
-                    );
+                    tracing::warn!("Private route access attempt for exercise {}", exercise_id);
                 }
             }
 
@@ -244,15 +241,15 @@ pub async fn outbox(
             activity_ids.push(a.id.clone());
         }
 
-        let mut has_routes: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
+        let mut has_routes: std::collections::HashMap<String, bool> =
+            std::collections::HashMap::new();
         for id in &activity_ids {
-            let count = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM routes WHERE activity_id = ?",
-            )
-            .bind(id)
-            .fetch_one(&db.pool)
-            .await
-            .unwrap_or(0);
+            let count =
+                sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM routes WHERE activity_id = ?")
+                    .bind(id)
+                    .fetch_one(&db.pool)
+                    .await
+                    .unwrap_or(0);
             has_routes.insert(id.clone(), count > 0);
         }
 

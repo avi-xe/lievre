@@ -122,7 +122,9 @@ pub fn exercise_to_jsonld(
         None
     };
 
-    let mut to = vec![serde_json::json!("https://www.w3.org/ns/activitystreams#Public")];
+    let mut to = vec![serde_json::json!(
+        "https://www.w3.org/ns/activitystreams#Public"
+    )];
     let mut cc = vec![serde_json::json!(format!("{}/followers", actor_url))];
 
     // For non-public, adjust visibility
@@ -234,10 +236,14 @@ mod tests {
         );
         // Public: to includes AS Public
         let to = json["to"].as_array().unwrap();
-        assert!(to.contains(&serde_json::json!("https://www.w3.org/ns/activitystreams#Public")));
+        assert!(to.contains(&serde_json::json!(
+            "https://www.w3.org/ns/activitystreams#Public"
+        )));
         // cc includes followers collection
         let cc = json["cc"].as_array().unwrap();
-        assert!(cc.contains(&serde_json::json!("https://lievre.example/users/alice/followers")));
+        assert!(cc.contains(&serde_json::json!(
+            "https://lievre.example/users/alice/followers"
+        )));
     }
 
     #[test]
@@ -297,10 +303,14 @@ mod tests {
 
         // Followers: no AS Public in to
         let to = json["to"].as_array().unwrap();
-        assert!(!to.contains(&serde_json::json!("https://www.w3.org/ns/activitystreams#Public")));
+        assert!(!to.contains(&serde_json::json!(
+            "https://www.w3.org/ns/activitystreams#Public"
+        )));
         // cc includes followers collection
         let cc = json["cc"].as_array().unwrap();
-        assert!(cc.contains(&serde_json::json!("https://lievre.example/users/alice/followers")));
+        assert!(cc.contains(&serde_json::json!(
+            "https://lievre.example/users/alice/followers"
+        )));
     }
 
     #[test]
