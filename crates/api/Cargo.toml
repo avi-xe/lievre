@@ -15,7 +15,6 @@ lievre-federation = { path = "../federation" }
 
 tokio.workspace = true
 axum = { version = "0.7", features = ["macros", "multipart"] }
-tower = { version = "0.4", features = ["util"] }
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -28,6 +27,7 @@ tracing-subscriber.workspace = true
 anyhow.workspace = true
 jsonwebtoken.workspace = true
 argon2.workspace = true
-validator.workspace = true
-http = "1"
 activitypub_federation = { version = "0.6", default-features = false }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
