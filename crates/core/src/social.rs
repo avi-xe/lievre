@@ -266,13 +266,11 @@ impl SocialRepository {
         remote_actor_url: &str,
         object_url: &str,
     ) -> Result<bool, anyhow::Error> {
-        let result = sqlx::query(
-            "DELETE FROM likes WHERE remote_actor_url = ? AND object_url = ?",
-        )
-        .bind(remote_actor_url)
-        .bind(object_url)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query("DELETE FROM likes WHERE remote_actor_url = ? AND object_url = ?")
+            .bind(remote_actor_url)
+            .bind(object_url)
+            .execute(&self.pool)
+            .await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -300,19 +298,14 @@ impl SocialRepository {
         object_url: &str,
     ) -> Result<Option<String>, anyhow::Error> {
         // Extract activity ID from URL like https://example.com/exercises/abc123
-        let activity_id = object_url
-            .rsplit('/')
-            .next()
-            .map(|s| s.to_string());
+        let activity_id = object_url.rsplit('/').next().map(|s| s.to_string());
 
         // Verify it exists in the database
         if let Some(id) = &activity_id {
-            let result: (i64,) = sqlx::query_as(
-                "SELECT COUNT(*) FROM activities WHERE id = ?",
-            )
-            .bind(id)
-            .fetch_one(&self.pool)
-            .await?;
+            let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM activities WHERE id = ?")
+                .bind(id)
+                .fetch_one(&self.pool)
+                .await?;
 
             if result.0 > 0 {
                 return Ok(Some(id.clone()));
@@ -327,28 +320,22 @@ impl SocialRepository {
         &self,
         activity_id: &str,
     ) -> Result<Option<String>, anyhow::Error> {
-        let result: (String,) = sqlx::query_as(
-            "SELECT user_id FROM activities WHERE id = ?",
-        )
-        .bind(activity_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (String,) = sqlx::query_as("SELECT user_id FROM activities WHERE id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(Some(result.0))
     }
 
     /// Check if an activity is remote (has a remote URL)
-    pub async fn is_remote_activity(
-        &self,
-        activity_id: &str,
-    ) -> Result<bool, anyhow::Error> {
+    pub async fn is_remote_activity(&self, activity_id: &str) -> Result<bool, anyhow::Error> {
         // Remote activities are stored in exercises table with is_local = 0
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM exercises WHERE activity_id = ? AND is_local = 0",
-        )
-        .bind(activity_id)
-        .fetch_one(&self.pool)
-        .await?;
+        let result: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM exercises WHERE activity_id = ? AND is_local = 0")
+                .bind(activity_id)
+                .fetch_one(&self.pool)
+                .await?;
 
         Ok(result.0 > 0)
     }
@@ -534,16 +521,11 @@ impl SocialRepository {
     }
 
     /// Get like count for an activity (including remote likes)
-    pub async fn get_total_like_count(
-        &self,
-        activity_id: &str,
-    ) -> Result<i64, anyhow::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM likes WHERE activity_id = ?",
-        )
-        .bind(activity_id)
-        .fetch_one(&self.pool)
-        .await?;
+    pub async fn get_total_like_count(&self, activity_id: &str) -> Result<i64, anyhow::Error> {
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM likes WHERE activity_id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(result.0)
     }

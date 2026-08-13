@@ -348,14 +348,12 @@ pub async fn inbox(
                 }
                 Some("Like") => {
                     // Handle undo like
-                    let like_object_url = object.get("object").and_then(|o| o.as_str()).unwrap_or("");
+                    let like_object_url =
+                        object.get("object").and_then(|o| o.as_str()).unwrap_or("");
 
                     if !actor_url.is_empty() && !like_object_url.is_empty() {
                         // Extract activity ID from object URL
-                        let activity_id = like_object_url
-                            .rsplit('/')
-                            .next()
-                            .unwrap_or("");
+                        let activity_id = like_object_url.rsplit('/').next().unwrap_or("");
 
                         // Remove the remote like
                         let result = sqlx::query(
@@ -368,7 +366,11 @@ pub async fn inbox(
                         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
                         if result.rows_affected() > 0 {
-                            tracing::info!("Removed remote like from {} on {}", actor_url, activity_id);
+                            tracing::info!(
+                                "Removed remote like from {} on {}",
+                                actor_url,
+                                activity_id
+                            );
                         } else {
                             tracing::warn!(
                                 "No like found to remove from {} on {}",
@@ -482,23 +484,22 @@ pub async fn inbox(
         "Like" => {
             // Handle like activity from remote user
             let actor_url = activity.get("actor").and_then(|a| a.as_str()).unwrap_or("");
-            let object_url = activity.get("object").and_then(|o| o.as_str()).unwrap_or("");
+            let object_url = activity
+                .get("object")
+                .and_then(|o| o.as_str())
+                .unwrap_or("");
 
             if !actor_url.is_empty() && !object_url.is_empty() {
                 // Extract activity ID from object URL
-                let activity_id = object_url
-                    .rsplit('/')
-                    .next()
-                    .unwrap_or("");
+                let activity_id = object_url.rsplit('/').next().unwrap_or("");
 
                 // Check if this is a local activity
-                let is_local = sqlx::query_as::<_, (i64,)>(
-                    "SELECT COUNT(*) FROM activities WHERE id = ?",
-                )
-                .bind(activity_id)
-                .fetch_one(&db.pool)
-                .await
-                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+                let is_local =
+                    sqlx::query_as::<_, (i64,)>("SELECT COUNT(*) FROM activities WHERE id = ?")
+                        .bind(activity_id)
+                        .fetch_one(&db.pool)
+                        .await
+                        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
                 if is_local.0 > 0 {
                     // Store the remote like
@@ -578,10 +579,7 @@ pub async fn inbox(
 
                     tracing::info!("Stored remote like from {} on {}", actor_url, activity_id);
                 } else {
-                    tracing::warn!(
-                        "Received like for non-local activity: {}",
-                        object_url
-                    );
+                    tracing::warn!("Received like for non-local activity: {}", object_url);
                 }
             }
 

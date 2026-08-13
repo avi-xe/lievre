@@ -88,7 +88,7 @@ pub async fn like_activity(
     Path(activity_id): Path<String>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
     let user = auth_user(&state, &headers).await?;
-    
+
     // Check if this is a remote activity
     let is_remote = state
         .social
@@ -104,7 +104,12 @@ pub async fn like_activity(
             .get_remote_exercise_url(&activity_id)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-            .ok_or_else(|| (StatusCode::NOT_FOUND, "Remote activity not found".to_string()))?;
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    "Remote activity not found".to_string(),
+                )
+            })?;
 
         // Create the local like record (for tracking)
         let like = state
@@ -117,7 +122,7 @@ pub async fn like_activity(
         let base_url = state.fed_db.base_url();
         let like_id = format!("{}/likes/{}", base_url, like.id);
         let actor_url = state.fed_db.actor_url(&user.username).to_string();
-        
+
         let like_activity = json!({
             "@context": "https://www.w3.org/ns/activitystreams",
             "type": "Like",
