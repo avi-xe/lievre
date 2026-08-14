@@ -129,10 +129,10 @@ graph TB
         AuthAPI["auth.rs<br/><i>POST /api/auth/register<br/>POST /api/auth/login</i>"]
         ImportAPI["import.rs<br/><i>POST /api/import/gpx<br/>POST /api/import/tcx<br/>POST /api/import/strava</i>"]
         ActivitiesAPI["activities.rs<br/><i>POST /api/activities<br/>GET /api/activities</i>"]
-        SocialAPI["social.rs<br/><i>POST /api/users/:id/follow<br/>POST /api/activities/:id/like</i>"]
+        SocialAPI["social.rs<br/><i>POST /api/users/:id/follow<br/>POST /api/activities/:id/like<br/>GET /api/activities/:id/likes</i>"]
         FeedAPI["feed.rs<br/><i>GET /api/feed<br/>GET /api/feed/public</i>"]
-        FederationAPI["federation.rs<br/><i>GET /.well-known/webfinger<br/>GET /users/:username<br/>POST /users/:username/inbox<br/>GET /users/:username/outbox</i>"]
-        GeoJsonAPI["geojson.rs<br/><i>GET /api/activities/:id/geojson</i>"]
+        FederationAPI["federation.rs<br/><i>GET /.well-known/webfinger<br/>GET /users/:username<br/>POST /users/:username/inbox<br/>GET /users/:username/outbox<br/>GET /ns/fedisport</i>"]
+        GeoJsonAPI["geojson.rs<br/><i>GET /api/activities/:id/geojson<br/>GET /api/exercises/:id/route<br/>GET /api/exercises/:id/stats</i>"]
     end
 
     subgraph "Core Library (crates/core)"
@@ -165,9 +165,10 @@ graph TB
     subgraph "Federation Library (crates/federation)"
         FederationConfig["config.rs<br/><i>FederationDb<br/>Domain, URLs</i>"]
         PersonMod["person.rs<br/><i>Person actor<br/>JSON-LD</i>"]
-        ExerciseMod["exercise.rs<br/><i>Exercise object<br/>fedisport vocab</i>"]
+        ContextMod["context.rs<br/><i>Fedisport JSON-LD<br/>context endpoint</i>"]
+        ExerciseMod["exercise.rs<br/><i>Exercise object<br/>fedisport vocab<br/>JSON-LD serialization</i>"]
         WebFingerMod["webfinger.rs<br/><i>WebFinger<br/>Discovery</i>"]
-        ActivityMod["activity.rs<br/><i>Create, Follow<br/>Accept, Undo</i>"]
+        ActivityMod["activity.rs<br/><i>Create, Follow<br/>Accept, Undo, Like</i>"]
         KeysMod["keys.rs<br/><i>RSA key pair<br/>generation</i>"]
         DeliveryMod["delivery.rs<br/><i>Async delivery<br/>queue</i>"]
     end
@@ -210,6 +211,19 @@ graph TB
 | **TcxParser** | `tcx.rs` | `.tcx` (XML) | CreateActivity + CreateRoute | quick-xml |
 | **BatchImporter** | `batch.rs` | `.zip` | Vec\<ParsedActivity\> | zip crate |
 | **StravaParser** | `strava.rs` | `.csv` | Vec\<StravaActivity\> | csv crate |
+
+#### Federation Components
+
+| Component | File | Responsibilities | Dependencies |
+|-----------|------|------------------|--------------|
+| **FederationConfig** | `config.rs` | FederationDb, domain config, URL construction | SQLite via SQLx |
+| **Person** | `person.rs` | Person actor JSON-LD serialization | serde, fedisport vocab |
+| **FedisportContext** | `context.rs` | Serves `/ns/fedisport` JSON-LD context | actix-web/axum |
+| **Exercise** | `exercise.rs` | Exercise object (fedisport), `exercise_to_jsonld()` serialization | serde, fedisport vocab |
+| **Activity** | `activity.rs` | Create, Follow, Accept, Undo, Like activity types | serde, fedisport vocab |
+| **WebFinger** | `webfinger.rs` | WebFinger discovery (`/.well-known/webfinger`) | actix-web/axum |
+| **Keys** | `keys.rs` | RSA key pair generation for HTTP signatures | ring/rsa crate |
+| **Delivery** | `delivery.rs` | Async delivery queue for outbound federation | tokio, reqwest |
 
 ### Internal Data Flow
 
@@ -274,8 +288,9 @@ lievre/
 │           ├── lib.rs      # Module exports
 │           ├── config.rs   # FederationDb, domain config
 │           ├── person.rs   # Person actor (JSON-LD)
-│           ├── exercise.rs # Exercise object (fedisport)
-│           ├── activity.rs # Create, Follow, Accept, Undo
+│           ├── context.rs  # Fedisport JSON-LD context (/ns/fedisport)
+│           ├── exercise.rs # Exercise object (fedisport vocab)
+│           ├── activity.rs # Create, Follow, Accept, Undo, Like
 │           ├── webfinger.rs # WebFinger discovery
 │           ├── keys.rs     # RSA key generation
 │           └── delivery.rs # Async delivery queue
@@ -379,4 +394,4 @@ graph LR
 
 ---
 
-*Last updated: 2026-08-10*
+*Last updated: 2026-08-14*

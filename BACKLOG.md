@@ -527,28 +527,37 @@ CREATE TABLE jobs (
 
 ---
 
-### 6.7 Like/Kudos Federation
+### 6.7 Like/Kudos Federation ✅ DONE
 **Priority:** P1 | **Estimate:** M
 
 **Story:** As a system, I want to federate likes so that users can give kudos across instances.
 
 **Acceptance Criteria:**
-- [ ] Send Like activity to activity author's inbox
-- [ ] Receive Like → store as local like
-- [ ] Receive Undo Like → remove like
+- [x] `like()` is idempotent — returns existing like if already liked
+- [x] `GET /api/activities/{id}/likes` returns `{ likes, count, liked }` (includes `liked` field)
+- [x] Outbound: local user likes remote activity → sends `Like` to remote inbox
+- [x] Inbound: receives `Like`/`Undo` from remote users, stores with `remote_actor_url`
+- [x] Notifications for remote likes
+- [x] Database migration: `migrations/20260813000000_add_like_federation_fields.sql`
+- [x] E2E tests: `e2e/test-like-federation.mjs`
 
 ---
 
-### 6.8 Exercise Object
+### 6.8 Exercise Object ✅ DONE
 **Priority:** P0 | **Estimate:** L
 
 **Story:** As a system, I want to publish Exercise objects (fedisport vocabulary) so that activities are correctly represented in the fediverse.
 
 **Acceptance Criteria:**
-- [ ] Exercise object with: type, attributedTo, activityType, startedAt, name, content, routeUrl, statsUrl
-- [ ] Serve routeUrl as GeoJSON
-- [ ] Serve statsUrl as JSON metrics
-- [ ] Respect visibility (public, followers-only)
+- [x] `GET /ns/fedisport` — serves JSON-LD context
+- [x] `exercise_to_jsonld()` — serializes Activity → Exercise object
+- [x] `GET /api/exercises/:id/route` — GeoJSON route endpoint
+- [x] `GET /api/exercises/:id/stats` — fitness metrics endpoint
+- [x] Outbox delivers `Create → Exercise` format
+- [x] Inbox receives remote Exercise objects
+- [x] New files: `context.rs`, `exercise.rs` in `crates/federation/src/`
+- [x] E2E tests: `e2e/test-exercise-object.mjs`
+- [x] Respect visibility (public, followers-only, private)
 
 ---
 
@@ -907,9 +916,11 @@ Epics included:
 - ⏳ Epic 2: File Import (GPX only)
 - ⏳ Epic 3: Activity Processing
 - ⏳ Epic 4: Maps (basic)
-- ⏳ Epic 5: Social (follow, like, feed)
-- ⏳ Epic 6: Federation (basic)
+- ✅ Epic 5: Social (follow, like, feed) — core complete
+- ✅ Epic 6: Federation (basic) — COMPLETE (Exercise Object + Like Federation merged)
 - ⏳ Epic 7: PWA (basic)
+
+**Federation status:** Both Exercise Object (PR #5) and Like/Kudos Federation (PR #6) are now merged. All federation endpoints functional. Remaining federation work (HTTP signatures, pagination) is post-MVP.
 
 ### Beta (v0.2.0)
 **Target:** 6 months
@@ -931,4 +942,4 @@ Add:
 
 ---
 
-*Last updated: 2026-08-10*
+*Last updated: 2026-08-14*

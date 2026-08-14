@@ -144,8 +144,8 @@ Cross-referenced against actual codebase. Status:
 - [x] `likes` table with all fields
 - [x] `POST /api/activities/{id}/like` — like activity
 - [x] `DELETE /api/activities/{id}/like` — unlike
-- [ ] `GET /api/activities/{id}/likes` — list who liked ← **MISSING ENDPOINT**
-- [ ] Count of likes on activity ← **NOT EXPOSED VIA API**
+- [x] `GET /api/activities/{id}/likes` — list who liked (returns `{ likes, count, liked }`)
+- [x] Count of likes on activity ← exposed via `count` field
 
 ### 5.3 Comments
 - [x] `comments` table with all fields
@@ -211,15 +211,23 @@ Cross-referenced against actual codebase. Status:
 - [x] Store remote followers in `actor_follows` table
 
 ### 6.7 Like/Kudos Federation
-- [x] Send Like activity to activity author's inbox
-- [x] Receive Like → store as local like
-- [x] Receive Undo Like → remove like
+- [x] `like()` is idempotent — returns existing like if already liked
+- [x] `GET /api/activities/{id}/likes` returns `{ likes, count, liked }` (includes `liked` field)
+- [x] Outbound: local user likes remote activity → sends `Like` to remote inbox
+- [x] Inbound: receives `Like`/`Undo` from remote users, stores with `remote_actor_url`
+- [x] Notifications for remote likes
+- [x] E2E tests: `e2e/test-like-federation.mjs`
 
 ### 6.8 Exercise Object
-- [x] Exercise object with all fields
-- [x] Serve routeUrl as GeoJSON
-- [x] Serve statsUrl as JSON metrics
-- [x] Respect visibility (public, followers-only)
+- [x] `GET /ns/fedisport` — serves JSON-LD context
+- [x] `exercise_to_jsonld()` — serializes Activity → Exercise object
+- [x] `GET /api/exercises/:id/route` — GeoJSON route endpoint
+- [x] `GET /api/exercises/:id/stats` — fitness metrics endpoint
+- [x] Outbox delivers `Create → Exercise` format
+- [x] Inbox receives remote Exercise objects
+- [x] New files: `context.rs`, `exercise.rs` in `crates/federation/src/`
+- [x] E2E tests: `e2e/test-exercise-object.mjs`
+- [x] Respect visibility (public, followers-only, private)
 
 ---
 
@@ -281,7 +289,9 @@ Cross-referenced against actual codebase. Status:
 | Epic 2 (Import) | 9 | 0 | 2 |
 | Epic 3 (Processing) | 9 | 0 | 2 |
 | Epic 4 (Maps) | 5 | 0 | 9 |
-| Epic 5 (Social) | 20 | 4 | 5 |
-| Epic 6 (Federation) | 14 | 0 | 4 |
+| Epic 5 (Social) | 22 | 4 | 3 |
+| Epic 6 (Federation) | 24 | 0 | 0 |
 | Epic 7 (Frontend) | 24 | 0 | 0 |
-| **Total** | **103** | **5** | **23** |
+| **Total** | **115** | **5** | **17** |
+
+*Last updated: 2026-08-14*

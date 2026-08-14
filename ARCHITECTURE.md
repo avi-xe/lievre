@@ -412,10 +412,36 @@ Following the **fedisport vocabulary** standard:
 | `/users/{username}/outbox` | C2S/S2S: Activity feed |
 | `/users/{username}/followers` | Follower collection |
 | `/users/{username}/following` | Following collection |
+| `/.well-known/webfinger` | User discovery (`acct:user@domain`) |
+| `/ns/fedisport` | Fedisport JSON-LD context |
 | `/api/exercises/{id}/route` | GeoJSON route data |
 | `/api/exercises/{id}/stats` | Fitness metrics |
 
-### 3.3 Supported Activity Types
+### 3.3 Like/Kudos Federation
+
+Likes are now fully federated across instances:
+
+**Outbound (local → remote):**
+- Local user likes a remote activity → `Like` activity sent to remote inbox
+- Outbox delivers `Like` with `actor` (local user) and `object` (remote activity URL)
+
+**Inbound (remote → local):**
+- Receives `Like` from remote user → stores with `remote_actor_url` and `object_url`
+- Receives `Undo Like` → removes like
+- Notifications generated for remote likes
+
+**Database migration:** `migrations/20260813000000_add_like_federation_fields.sql`
+- Adds `remote_actor_url TEXT` to `likes` table (for remote likes)
+- Adds `object_url TEXT` to `likes` table (for remote activity references)
+
+**API:** `GET /api/activities/{id}/likes` returns `{ likes, count, liked }` where:
+- `likes` — list of liker usernames
+- `count` — total like count
+- `liked` — whether current user has liked (authenticated only)
+
+**Idempotency:** `like()` is idempotent — calling like on an already-liked activity returns the existing like.
+
+### 3.4 Supported Activity Types
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -597,6 +623,8 @@ CREATE TABLE likes (
     activity_id UUID NOT NULL REFERENCES activities(id),
     actor_id UUID NOT NULL REFERENCES actors(id),
     ap_id TEXT,
+    remote_actor_url TEXT,               -- for federated likes from remote users
+    object_url TEXT,                      -- URL of the remote activity being liked
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(activity_id, actor_id)
 );
@@ -1069,4 +1097,4 @@ cargo run -- migrate
 
 ---
 
-*Last updated: 2026-08-10*
+*Last updated: 2026-08-14*
