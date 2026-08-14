@@ -165,6 +165,17 @@ impl SocialRepository {
     // Like operations
 
     pub async fn like(&self, activity_id: &str, user_id: &str) -> Result<Like, anyhow::Error> {
+        // Idempotent: check if already liked, return existing like
+        if let Ok(Some(existing)) =
+            sqlx::query_as::<_, Like>("SELECT * FROM likes WHERE activity_id = ? AND user_id = ?")
+                .bind(activity_id)
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await
+        {
+            return Ok(existing);
+        }
+
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
 

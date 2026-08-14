@@ -299,6 +299,7 @@ pub async fn delete_comment(
 /// GET /api/activities/:id/likes — list who liked an activity
 pub async fn get_likes(
     State(state): State<crate::AppState>,
+    headers: axum::http::header::HeaderMap,
     Path(activity_id): Path<String>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
     let likes = state
@@ -311,5 +312,18 @@ pub async fn get_likes(
         .get_like_count(&activity_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(json!({ "likes": likes, "count": count })))
+
+    // Check if current user has liked (optional — unauthenticated returns false)
+    let liked = match auth_user(&state, &headers).await {
+        Ok(user) => state
+            .social
+            .has_liked(&activity_id, &user.id)
+            .await
+            .unwrap_or(false),
+        Err(_) => false,
+    };
+
+    Ok(Json(
+        json!({ "likes": likes, "count": count, "liked": liked }),
+    ))
 }
