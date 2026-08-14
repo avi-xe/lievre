@@ -67,6 +67,11 @@ impl FederationDb {
         .expect("Invalid stats URL")
     }
 
+    /// Get like URL
+    pub fn like_url(&self, like_id: &str) -> Url {
+        Url::parse(&format!("{}/likes/{}", self.base_url(), like_id)).expect("Invalid like URL")
+    }
+
     /// Get WebFinger URL
     pub fn webfinger_url(&self) -> Url {
         Url::parse(&format!("{}/.well-known/webfinger", self.base_url()))

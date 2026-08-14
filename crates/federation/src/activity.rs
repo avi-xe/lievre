@@ -1,4 +1,4 @@
-use activitystreams_kinds::activity::{AcceptType, CreateType, FollowType, UndoType};
+use activitystreams_kinds::activity::{AcceptType, CreateType, FollowType, LikeType, UndoType};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -48,4 +48,26 @@ pub struct UndoActivity {
     pub id: Url,
     pub actor: Url,
     pub object: FollowActivity,
+}
+
+/// ActivityPub Like activity
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LikeActivity {
+    #[serde(rename = "type")]
+    pub kind: LikeType,
+    pub id: Url,
+    pub actor: Url,
+    pub object: Url,
+}
+
+/// ActivityPub Undo activity (undoing a like)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UndoLikeActivity {
+    #[serde(rename = "type")]
+    pub kind: UndoType,
+    pub id: Url,
+    pub actor: Url,
+    pub object: LikeActivity,
 }

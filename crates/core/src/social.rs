@@ -14,7 +14,9 @@ pub struct Follow {
 pub struct Like {
     pub id: String,
     pub activity_id: String,
-    pub user_id: String,
+    pub user_id: Option<String>,
+    pub remote_actor_url: Option<String>,
+    pub object_url: Option<String>,
     pub created_at: String,
 }
 
@@ -163,6 +165,17 @@ impl SocialRepository {
     // Like operations
 
     pub async fn like(&self, activity_id: &str, user_id: &str) -> Result<Like, anyhow::Error> {
+        // Idempotent: check if already liked, return existing like
+        if let Ok(Some(existing)) =
+            sqlx::query_as::<_, Like>("SELECT * FROM likes WHERE activity_id = ? AND user_id = ?")
+                .bind(activity_id)
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await
+        {
+            return Ok(existing);
+        }
+
         let id = uuid::Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
 
@@ -224,6 +237,133 @@ impl SocialRepository {
         .await?;
 
         Ok(likes)
+    }
+
+    // Remote like operations
+
+    /// Store a like from a remote actor
+    pub async fn like_remote(
+        &self,
+        activity_id: &str,
+        remote_actor_url: &str,
+        object_url: &str,
+    ) -> Result<Like, anyhow::Error> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        sqlx::query(
+            "INSERT OR IGNORE INTO likes (id, activity_id, remote_actor_url, object_url, created_at)
+             VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(&id)
+        .bind(activity_id)
+        .bind(remote_actor_url)
+        .bind(object_url)
+        .bind(&now)
+        .execute(&self.pool)
+        .await?;
+
+        let like = sqlx::query_as::<_, Like>("SELECT * FROM likes WHERE id = ?")
+            .bind(&id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(like)
+    }
+
+    /// Remove a like from a remote actor
+    pub async fn unlike_remote(
+        &self,
+        remote_actor_url: &str,
+        object_url: &str,
+    ) -> Result<bool, anyhow::Error> {
+        let result = sqlx::query("DELETE FROM likes WHERE remote_actor_url = ? AND object_url = ?")
+            .bind(remote_actor_url)
+            .bind(object_url)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Check if a remote actor has liked an activity
+    pub async fn has_liked_remote(
+        &self,
+        activity_id: &str,
+        remote_actor_url: &str,
+    ) -> Result<bool, anyhow::Error> {
+        let result: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM likes WHERE activity_id = ? AND remote_actor_url = ?",
+        )
+        .bind(activity_id)
+        .bind(remote_actor_url)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(result.0 > 0)
+    }
+
+    /// Get activity ID from object URL
+    pub async fn get_activity_id_from_url(
+        &self,
+        object_url: &str,
+    ) -> Result<Option<String>, anyhow::Error> {
+        // Extract activity ID from URL like https://example.com/exercises/abc123
+        let activity_id = object_url.rsplit('/').next().map(|s| s.to_string());
+
+        // Verify it exists in the database
+        if let Some(id) = &activity_id {
+            let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM activities WHERE id = ?")
+                .bind(id)
+                .fetch_one(&self.pool)
+                .await?;
+
+            if result.0 > 0 {
+                return Ok(Some(id.clone()));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Get activity owner ID for notification
+    pub async fn get_activity_owner_id(
+        &self,
+        activity_id: &str,
+    ) -> Result<Option<String>, anyhow::Error> {
+        let result: (String,) = sqlx::query_as("SELECT user_id FROM activities WHERE id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(Some(result.0))
+    }
+
+    /// Check if an activity is remote (has a remote URL)
+    pub async fn is_remote_activity(&self, activity_id: &str) -> Result<bool, anyhow::Error> {
+        // Remote activities are stored in exercises table with is_local = 0
+        let result: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM exercises WHERE activity_id = ? AND is_local = 0")
+                .bind(activity_id)
+                .fetch_one(&self.pool)
+                .await?;
+
+        Ok(result.0 > 0)
+    }
+
+    /// Get the remote exercise URL for an activity
+    pub async fn get_remote_exercise_url(
+        &self,
+        activity_id: &str,
+    ) -> Result<Option<String>, anyhow::Error> {
+        let result: (String,) = sqlx::query_as(
+            "SELECT exercise_url FROM exercises WHERE activity_id = ? AND is_local = 0",
+        )
+        .bind(activity_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(Some(result.0))
     }
 
     // Comment operations
@@ -390,6 +530,16 @@ impl SocialRepository {
 
         Ok(activities)
     }
+
+    /// Get like count for an activity (including remote likes)
+    pub async fn get_total_like_count(&self, activity_id: &str) -> Result<i64, anyhow::Error> {
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM likes WHERE activity_id = ?")
+            .bind(activity_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        Ok(result.0)
+    }
 }
 
 #[cfg(test)]
@@ -457,9 +607,12 @@ mod tests {
             "CREATE TABLE IF NOT EXISTS likes (
                 id TEXT PRIMARY KEY,
                 activity_id TEXT NOT NULL REFERENCES activities(id),
-                user_id TEXT NOT NULL REFERENCES users(id),
+                user_id TEXT REFERENCES users(id),
+                remote_actor_url TEXT,
+                object_url TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
-                UNIQUE(activity_id, user_id)
+                UNIQUE(activity_id, user_id),
+                UNIQUE(activity_id, remote_actor_url)
             )",
         )
         .execute(&pool)
@@ -587,5 +740,157 @@ mod tests {
         let feed = repo.get_feed("user1", 10, 0).await.unwrap();
         assert_eq!(feed.len(), 1);
         assert_eq!(feed[0].id, "act1");
+    }
+
+    #[tokio::test]
+    async fn test_like_remote() {
+        let pool = setup_db().await;
+        let repo = SocialRepository::new(pool);
+
+        let like = repo
+            .like_remote(
+                "act1",
+                "https://remote.example.com/users/alice",
+                "https://remote.example.com/exercises/123",
+            )
+            .await
+            .unwrap();
+        assert_eq!(like.activity_id, "act1");
+        assert_eq!(
+            like.remote_actor_url.as_deref(),
+            Some("https://remote.example.com/users/alice")
+        );
+        assert_eq!(
+            like.object_url.as_deref(),
+            Some("https://remote.example.com/exercises/123")
+        );
+        assert!(like.user_id.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_unlike_remote() {
+        let pool = setup_db().await;
+        let repo = SocialRepository::new(pool);
+
+        repo.like_remote(
+            "act1",
+            "https://remote.example.com/users/alice",
+            "https://remote.example.com/exercises/123",
+        )
+        .await
+        .unwrap();
+
+        let result = repo
+            .unlike_remote(
+                "https://remote.example.com/users/alice",
+                "https://remote.example.com/exercises/123",
+            )
+            .await
+            .unwrap();
+        assert!(result);
+    }
+
+    #[tokio::test]
+    async fn test_has_liked_remote() {
+        let pool = setup_db().await;
+        let repo = SocialRepository::new(pool);
+
+        assert!(!repo
+            .has_liked_remote("act1", "https://remote.example.com/users/alice")
+            .await
+            .unwrap());
+
+        repo.like_remote(
+            "act1",
+            "https://remote.example.com/users/alice",
+            "https://remote.example.com/exercises/123",
+        )
+        .await
+        .unwrap();
+
+        assert!(repo
+            .has_liked_remote("act1", "https://remote.example.com/users/alice")
+            .await
+            .unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_get_like_count_includes_remote() {
+        let pool = setup_db().await;
+        let repo = SocialRepository::new(pool);
+
+        // Add local like
+        repo.like("act1", "user1").await.unwrap();
+        assert_eq!(repo.get_like_count("act1").await.unwrap(), 1);
+
+        // Add remote like
+        repo.like_remote(
+            "act1",
+            "https://remote.example.com/users/alice",
+            "https://remote.example.com/exercises/123",
+        )
+        .await
+        .unwrap();
+
+        // Count should include both
+        assert_eq!(repo.get_like_count("act1").await.unwrap(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_get_total_like_count() {
+        let pool = setup_db().await;
+        let repo = SocialRepository::new(pool);
+
+        repo.like("act1", "user1").await.unwrap();
+        repo.like_remote(
+            "act1",
+            "https://remote.example.com/users/alice",
+            "https://remote.example.com/exercises/123",
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(repo.get_total_like_count("act1").await.unwrap(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_is_remote_activity() {
+        let pool = setup_db().await;
+
+        // Create exercises table for testing
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS exercises (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                activity_id TEXT REFERENCES activities(id),
+                actor_url TEXT,
+                exercise_url TEXT,
+                activity_type TEXT NOT NULL,
+                started_at TEXT NOT NULL,
+                name TEXT,
+                content TEXT,
+                route_url TEXT,
+                stats_url TEXT,
+                published_at TEXT,
+                is_local INTEGER NOT NULL DEFAULT 1
+            )",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        // Insert remote exercise for act1
+        sqlx::query(
+            "INSERT INTO exercises (id, user_id, activity_id, actor_url, exercise_url, activity_type, started_at, is_local)
+             VALUES ('ex1', 'user1', 'act1', 'https://remote.example.com/users/alice', 'https://remote.example.com/exercises/123', 'ride', '2024-01-15T08:00:00Z', 0)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let repo = SocialRepository::new(pool);
+
+        // act1 has a remote exercise entry, so it should be considered remote
+        assert!(repo.is_remote_activity("act1").await.unwrap());
     }
 }
