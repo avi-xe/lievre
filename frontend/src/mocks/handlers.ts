@@ -175,6 +175,26 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  // GPX Import
+  http.post(`${API_BASE}/import/gpx`, async () => {
+    const marathonActivity = {
+      id: `activity-gpx-${Date.now()}`,
+      user_id: mockUser.id,
+      activity_type: "run",
+      title: "Berlin Marathon",
+      description: "42.2 km marathon course modeled on the BMW Berlin Marathon route",
+      started_at: "2025-09-28T09:15:00Z",
+      duration_seconds: 12600,
+      distance_meters: 42195,
+      elevation_gain_meters: 45,
+      visibility: "public",
+      like_count: 0,
+      username: mockUser.username,
+    };
+    mockActivities.unshift(marathonActivity);
+    return HttpResponse.json(marathonActivity, { status: 201 });
+  }),
+
   // Notifications
   http.get(`${API_BASE}/notifications`, () => {
     return HttpResponse.json(mockNotifications);
