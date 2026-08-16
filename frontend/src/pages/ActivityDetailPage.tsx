@@ -185,7 +185,7 @@ export function ActivityDetailPage() {
               <Avatar className="h-12 w-12">
                 <AvatarImage src={`/avatars/${activity.user_id}.jpg`} alt="" />
                 <AvatarFallback>
-                  {activity.user_id?.[0]?.toUpperCase() || "U"}
+                  {activity.username?.[0]?.toUpperCase() || activity.user_id?.[0]?.toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
             </Link>
@@ -194,7 +194,7 @@ export function ActivityDetailPage() {
                 to={`/profile/${activity.user_id}`}
                 className="text-lg font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
               >
-                {activity.user_id}
+                {activity.username || activity.user_id}
               </Link>
               <p className="text-sm text-muted-foreground">
                 {new Date(activity.started_at).toLocaleString()}
@@ -256,7 +256,7 @@ export function ActivityDetailPage() {
         <Button
           variant={liked ? "default" : "outline"}
           onClick={handleLike}
-          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Heart
             className={`mr-2 h-4 w-4 ${liked ? "fill-current" : ""}`}
@@ -269,7 +269,7 @@ export function ActivityDetailPage() {
           <>
             <Link
               to={`/activities/${id}/edit`}
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
               Edit
@@ -277,7 +277,7 @@ export function ActivityDetailPage() {
             <Button
               variant="destructive"
               onClick={() => setDeleteDialogOpen(true)}
-              className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
               Delete
@@ -353,12 +353,12 @@ export function ActivityDetailPage() {
             placeholder="Add a comment..."
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            className="flex-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="h-11 flex-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
           <Button
             type="submit"
             disabled={!commentText.trim()}
-            className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="h-11 w-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Send className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Post comment</span>

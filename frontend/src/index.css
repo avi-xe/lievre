@@ -83,7 +83,7 @@
   --accent: 199 58% 53%;
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 50%;
   --destructive-foreground: 0 0% 100%;
 
   --border: 214 20% 90%;
@@ -105,13 +105,13 @@
 
   /* Charts */
   --chart-1: 358 75% 52%;
-  --chart-2: 204 48% 44%;
+  --chart-2: 204 48% 40%;
   --chart-3: 168 42% 34%;
   --chart-4: 43 65% 34%;
   --chart-5: 28 60% 38%;
 
   /* Sport colors — darkened for WCAG AA contrast on white */
-  --ride: 204 48% 44%;
+  --ride: 204 48% 40%;
   --run: 168 42% 34%;
   --swim: 199 43% 24%;
   --walk: 43 65% 34%;
@@ -159,7 +159,7 @@
 
   /* Charts */
   --chart-1: 358 75% 52%;
-  --chart-2: 204 48% 44%;
+  --chart-2: 204 48% 40%;
   --chart-3: 168 42% 34%;
   --chart-4: 43 65% 34%;
   --chart-5: 28 60% 38%;
