@@ -267,16 +267,13 @@ export function ActivityDetailPage() {
         </Button>
         {isOwner && (
           <>
-            <Button
-              variant="outline"
-              asChild
-              className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            <Link
+              to={`/activities/${id}/edit`}
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <Link to={`/activities/${id}/edit`}>
-                <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
-                Edit
-              </Link>
-            </Button>
+              <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
+              Edit
+            </Link>
             <Button
               variant="destructive"
               onClick={() => setDeleteDialogOpen(true)}
