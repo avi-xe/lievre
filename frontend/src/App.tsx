@@ -16,51 +16,6 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { UsersPage } from "./pages/UsersPage";
 
-// Placeholder pages for new routes
-function ExplorePage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Explore</h1>
-      <p className="text-muted-foreground">
-        Discover activities and athletes from around the world.
-      </p>
-    </div>
-  );
-}
-
-function RecordPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Record Activity</h1>
-      <p className="text-muted-foreground">
-        Upload a GPX file or record a new activity.
-      </p>
-    </div>
-  );
-}
-
-function SearchPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Search</h1>
-      <p className="text-muted-foreground">
-        Search for activities, athletes, and routes.
-      </p>
-    </div>
-  );
-}
-
-function SettingsPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-      <p className="text-muted-foreground">
-        Manage your account settings and preferences.
-      </p>
-    </div>
-  );
-}
-
 function App() {
   return (
     <BrowserRouter>
@@ -75,17 +30,13 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<FeedPage />} />
-                <Route path="/explore" element={<ExplorePage />} />
-                <Route path="/record" element={<RecordPage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/:id" element={<ProfilePage />} />
                 <Route path="/activities" element={<ActivityListPage />} />
                 <Route path="/activities/new" element={<CreateActivityPage />} />
                 <Route path="/activities/:id" element={<ActivityDetailPage />} />
                 <Route path="/activities/:id/edit" element={<ActivityEditPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/:id" element={<ProfilePage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/users" element={<UsersPage />} />
               </Route>
             </Route>

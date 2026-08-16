@@ -10,15 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import {
-  Bell,
-  Search,
-  Menu,
-  Settings,
-  LogOut,
-  User,
-  Map,
-} from "lucide-react";
+import { Bell, Search, Menu, Settings, LogOut, User, Map } from "lucide-react";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -49,40 +41,11 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
         <Link
           to="/"
           className="mr-6 flex items-center space-x-2 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-          aria-label="Peloton home"
+          aria-label="Lièvre home"
         >
           <Map className="h-6 w-6 text-primary" aria-hidden="true" />
-          <span className="hidden font-bold sm:inline-block">Peloton</span>
+          <span className="font-bold">Lièvre</span>
         </Link>
-
-        {/* Desktop navigation */}
-        <nav
-          className="hidden lg:flex lg:items-center lg:space-x-1"
-          role="navigation"
-          aria-label="Main navigation"
-        >
-          {[
-            { to: "/", label: "Feed" },
-            { to: "/explore", label: "Explore" },
-            { to: "/record", label: "Record" },
-          ].map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors
-                ${
-                  location.pathname === item.to
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-              `}
-              aria-current={location.pathname === item.to ? "page" : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="flex-1" />
 
