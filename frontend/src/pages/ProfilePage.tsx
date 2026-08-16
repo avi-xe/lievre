@@ -27,9 +27,8 @@ export function ProfilePage() {
   const [error, setError] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  const isOwn = currentUser?.id === profileId;
-
   const profileId = id || currentUser?.id;
+  const isOwn = currentUser?.id === profileId;
 
   useEffect(() => {
     if (!profileId) {

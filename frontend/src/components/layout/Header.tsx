@@ -84,18 +84,14 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
 
           {/* Profile menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                aria-label="User menu"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/avatars/user.jpg" alt="" />
-                  <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
-              </Button>
+            <DropdownMenuTrigger
+              className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
+              aria-label="User menu"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/avatars/user.jpg" alt="" />
+                <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+              </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem asChild>
