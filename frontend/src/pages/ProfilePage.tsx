@@ -27,39 +27,44 @@ export function ProfilePage() {
   const [error, setError] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  const isOwn = currentUser?.id === id;
+  const isOwn = currentUser?.id === profileId;
+
+  const profileId = id || currentUser?.id;
 
   useEffect(() => {
-    if (!id) return;
+    if (!profileId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(false);
 
-    apiFetch<{ username: string; email: string; id: string }>(`/api/users/${id}`)
+    apiFetch<{ username: string; email: string; id: string }>(`/api/users/${profileId}`)
       .then((data) => setProfile(data))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
 
-    apiFetch<Activity[]>(`/api/users/${id}/activities`)
+    apiFetch<Activity[]>(`/api/users/${profileId}/activities`)
       .then((data) => setActivities(data))
       .catch(() => setActivities([]));
 
-    if (currentUser && currentUser.id !== id) {
-      apiFetch<{ is_following: boolean }>(`/api/users/${id}/follow-status`)
+    if (currentUser && currentUser.id !== profileId) {
+      apiFetch<{ is_following: boolean }>(`/api/users/${profileId}/follow-status`)
         .then((data) => setIsFollowing(data.is_following))
         .catch(() => {});
     }
-  }, [id, currentUser]);
+  }, [profileId, currentUser]);
 
   const handleFollow = async () => {
-    if (!id || followLoading) return;
+    if (!profileId || followLoading) return;
     setFollowLoading(true);
     try {
       if (isFollowing) {
-        await apiFetch(`/api/users/${id}/follow`, { method: "DELETE" });
+        await apiFetch(`/api/users/${profileId}/follow`, { method: "DELETE" });
         setIsFollowing(false);
       } else {
-        await apiFetch(`/api/users/${id}/follow`, { method: "POST" });
+        await apiFetch(`/api/users/${profileId}/follow`, { method: "POST" });
         setIsFollowing(true);
       }
     } catch {
