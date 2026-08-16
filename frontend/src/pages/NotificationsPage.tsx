@@ -167,13 +167,8 @@ function NotificationItem({
       <div className="flex-1 min-w-0">
         <p className="text-sm">
           <span className="font-semibold">{notification.actor_username}</span>{" "}
-          <span className="text-muted-foreground">{label}</span>
+          <span className="text-muted-foreground">{notification.content || label}</span>
         </p>
-        {notification.content && (
-          <p className="mt-1 truncate text-sm text-muted-foreground">
-            {notification.content}
-          </p>
-        )}
         <time
           className="mt-1 block text-xs text-muted-foreground/70"
           dateTime={notification.created_at}
