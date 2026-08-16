@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, Compass, PlusCircle, User } from "lucide-react";
+import { Home, Activity, Bell, User } from "lucide-react";
 
 const navItems = [
   { to: "/", icon: Home, label: "Feed" },
-  { to: "/explore", icon: Compass, label: "Explore" },
-  { to: "/record", icon: PlusCircle, label: "Record", isPrimary: true },
+  { to: "/activities", icon: Activity, label: "Activities" },
+  { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/profile", icon: User, label: "Profile" },
 ];
 
@@ -32,9 +32,8 @@ export function BottomNav() {
                 "rounded-md",
                 "hover:bg-muted hover:text-foreground",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                item.isPrimary && "text-primary",
                 isActive && "text-primary",
-                !isActive && !item.isPrimary && "text-muted-foreground"
+                !isActive && "text-muted-foreground"
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
@@ -42,7 +41,6 @@ export function BottomNav() {
               <Icon
                 className={cn(
                   "h-5 w-5 transition-transform",
-                  item.isPrimary && "h-6 w-6",
                   isActive && "scale-110"
                 )}
                 aria-hidden="true"

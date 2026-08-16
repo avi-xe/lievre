@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +19,14 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <header
       className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
@@ -84,7 +93,7 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/avatars/user.jpg" alt="" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -112,7 +121,7 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
                 className="flex items-center cursor-pointer text-destructive focus-visible:bg-destructive/10 focus-visible:text-destructive"
                 onSelect={(e) => {
                   e.preventDefault();
-                  // Handle logout
+                  handleLogout();
                 }}
               >
                 <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
