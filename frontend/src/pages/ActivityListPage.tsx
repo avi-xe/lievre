@@ -115,7 +115,7 @@ function ActivityListEmpty() {
           Start tracking your workouts and they will appear here.
         </p>
         <Button asChild className="mt-4">
-          <Link to="/activities/new">
+          <Link to="/activities/new" className="inline-flex items-center">
             <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             New Activity
           </Link>
@@ -175,7 +175,7 @@ export function ActivityListPage() {
             <CardTitle>My Activities</CardTitle>
             <CardAction>
               <Button asChild>
-                <Link to="/activities/new">
+                <Link to="/activities/new" className="inline-flex items-center">
                   <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                   New Activity
                 </Link>
