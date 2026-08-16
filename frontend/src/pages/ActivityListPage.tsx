@@ -200,56 +200,94 @@ export function ActivityListPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Distance</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
-                <TableHead className="text-right">Likes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {activities.map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell>
-                    <Link
-                      to={`/activities/${activity.id}`}
-                      className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                    >
-                      {activity.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={activityTypeBadgeVariant[activity.activity_type] ?? "secondary"}
-                      className={activityColors[activity.activity_type] ?? ""}
-                    >
-                      {(() => {
-                        const Icon = activityIcons[activity.activity_type] || Bike;
-                        return <Icon className="mr-1 h-3 w-3" aria-hidden="true" />;
-                      })()}
-                      {activity.activity_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(activity.started_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatDistance(activity.distance_meters)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatDuration(activity.duration_seconds)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {activity.like_count ?? "-"}
-                  </TableCell>
+          {/* Desktop: Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Distance</TableHead>
+                  <TableHead className="text-right">Duration</TableHead>
+                  <TableHead className="text-right">Likes</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {activities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell>
+                      <Link
+                        to={`/activities/${activity.id}`}
+                        className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                      >
+                        {activity.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={activityTypeBadgeVariant[activity.activity_type] ?? "secondary"}
+                        className={activityColors[activity.activity_type] ?? ""}
+                      >
+                        {(() => {
+                          const Icon = activityIcons[activity.activity_type] || Bike;
+                          return <Icon className="mr-1 h-3 w-3" aria-hidden="true" />;
+                        })()}
+                        {activity.activity_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(activity.started_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatDistance(activity.distance_meters)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatDuration(activity.duration_seconds)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {activity.like_count ?? "-"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile: Cards */}
+          <div className="space-y-3 md:hidden">
+            {activities.map((activity) => (
+              <Link
+                key={activity.id}
+                to={`/activities/${activity.id}`}
+                className="block rounded-lg border p-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{activity.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(activity.started_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={activityTypeBadgeVariant[activity.activity_type] ?? "secondary"}
+                    className={`shrink-0 ${activityColors[activity.activity_type] ?? ""}`}
+                  >
+                    {(() => {
+                      const Icon = activityIcons[activity.activity_type] || Bike;
+                      return <Icon className="mr-1 h-3 w-3" aria-hidden="true" />;
+                    })()}
+                    {activity.activity_type}
+                  </Badge>
+                </div>
+                <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+                  <span>{formatDistance(activity.distance_meters)}</span>
+                  <span>{formatDuration(activity.duration_seconds)}</span>
+                  <span>♥ {activity.like_count ?? 0}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -332,19 +332,17 @@ export function NotificationsPage() {
 
         <Separator />
 
-        <ScrollArea className="max-h-[60vh]">
-          <CardContent className="p-2">
-            <ul className="space-y-1" role="list" aria-label="Notifications list">
-              {notifications.map((notification, index) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkRead={markRead}
-                />
-              ))}
-            </ul>
-          </CardContent>
-        </ScrollArea>
+        <CardContent className="p-2 sm:max-h-[60vh] sm:overflow-auto">
+          <ul className="space-y-1" role="list" aria-label="Notifications list">
+            {notifications.map((notification, index) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onMarkRead={markRead}
+              />
+            ))}
+          </ul>
+        </CardContent>
       </Card>
     </div>
   );
