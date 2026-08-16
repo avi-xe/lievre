@@ -160,7 +160,7 @@ function NotificationItem({
           src={`https://api.dicebear.com/7.x/thumbs/svg?seed=${notification.actor_username}`}
           alt=""
         />
-        <AvatarFallback>{notification.actor_username.charAt(0).toUpperCase()}</AvatarFallback>
+        <AvatarFallback>{notification.actor_username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
       </Avatar>
 
       {/* Content */}
