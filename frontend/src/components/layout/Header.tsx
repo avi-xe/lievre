@@ -37,7 +37,7 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="mr-2 lg:hidden"
+          className="mr-2 h-11 w-11 lg:hidden"
           onClick={onMenuToggle}
           aria-label="Toggle navigation menu"
         >
@@ -59,35 +59,29 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="relative focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          <Link
+            to="/notifications"
+            className="relative flex h-11 w-11 items-center justify-center rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount} unread)` : ""}`}
           >
-            <Link
-              to="/notifications"
-              aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount} unread)` : ""}`}
-            >
-              <Bell className="h-5 w-5" aria-hidden="true" />
-              {notificationCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs"
-                  aria-hidden="true"
-                >
-                  {notificationCount > 99 ? "99+" : notificationCount}
-                </Badge>
-              )}
-            </Link>
-          </Button>
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            {notificationCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs"
+                aria-hidden="true"
+              >
+                {notificationCount > 99 ? "99+" : notificationCount}
+              </Badge>
+            )}
+          </Link>
 
           <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
 
           {/* Profile menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
+              className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none"
               aria-label="User menu"
             >
               <Avatar className="h-8 w-8">

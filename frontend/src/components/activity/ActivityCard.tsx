@@ -4,28 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Heart, MessageCircle, Repeat2, Clock, Mountain, Bike, Footprints, Waves, TreePine } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Clock, Mountain } from "lucide-react";
+import { activityIcons, activityColors } from "@/lib/activity-helpers";
 import type { FeedItem } from "@/lib/types";
 
 interface ActivityCardProps {
   activity: FeedItem;
 }
-
-const activityIcons: Record<string, typeof Bike> = {
-  ride: Bike,
-  run: Footprints,
-  swim: Waves,
-  walk: Footprints,
-  hike: TreePine,
-};
-
-const activityColors: Record<string, string> = {
-  ride: "bg-ride/10 text-ride",
-  run: "bg-run/10 text-run",
-  swim: "bg-swim/10 text-swim",
-  walk: "bg-walk/10 text-walk",
-  hike: "bg-hike/10 text-hike",
-};
 
 function formatDuration(seconds: number | null): string | null {
   if (!seconds) return null;

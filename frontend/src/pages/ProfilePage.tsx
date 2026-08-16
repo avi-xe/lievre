@@ -137,7 +137,6 @@ export function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       {/* Profile header */}
-      <h1 className="sr-only">{p.username}</h1>
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start justify-between">

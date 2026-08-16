@@ -186,10 +186,10 @@ function NotificationItem({
               e.stopPropagation();
               onMarkRead(notification.id);
             }}
-            className="rounded-full bg-primary/20 p-1 transition-colors hover:bg-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/20 transition-colors hover:bg-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label={`Mark notification from ${notification.actor_username} as read`}
           >
-            <CheckCheck className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+            <CheckCheck className="h-4 w-4 text-primary" aria-hidden="true" />
           </button>
         )}
       </div>

@@ -28,29 +28,10 @@ import {
   Clock,
   Mountain,
   MapPin,
-  Bike,
-  Footprints,
-  Waves,
-  TreePine,
   Send,
 } from "lucide-react";
+import { activityIcons, activityColors } from "@/lib/activity-helpers";
 import type { Activity, Comment } from "@/lib/types";
-
-const activityIcons: Record<string, typeof Bike> = {
-  ride: Bike,
-  run: Footprints,
-  swim: Waves,
-  walk: Footprints,
-  hike: TreePine,
-};
-
-const activityColors: Record<string, string> = {
-  ride: "bg-ride/10 text-ride",
-  run: "bg-run/10 text-run",
-  swim: "bg-swim/10 text-swim",
-  walk: "bg-walk/10 text-walk",
-  hike: "bg-hike/10 text-hike",
-};
 
 function formatDuration(seconds: number | null): string | null {
   if (!seconds) return null;

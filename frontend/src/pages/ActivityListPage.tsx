@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Map, Plus, AlertCircle, Bike, Footprints, Waves, TreePine } from "lucide-react";
+import { Map, Plus, AlertCircle } from "lucide-react";
+import { activityIcons, activityColors } from "@/lib/activity-helpers";
 import type { Activity } from "@/lib/types";
 
 interface ActivityWithLikes extends Activity {
@@ -26,22 +27,6 @@ function formatDistance(meters: number | null): string {
   if (meters == null) return "-";
   return `${(meters / 1000).toFixed(1)} km`;
 }
-
-const activityIcons: Record<string, typeof Bike> = {
-  ride: Bike,
-  run: Footprints,
-  swim: Waves,
-  walk: Footprints,
-  hike: TreePine,
-};
-
-const activityColors: Record<string, string> = {
-  ride: "bg-ride/10 text-ride",
-  run: "bg-run/10 text-run",
-  swim: "bg-swim/10 text-swim",
-  walk: "bg-walk/10 text-walk",
-  hike: "bg-hike/10 text-hike",
-};
 
 const activityTypeBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
   ride: "default",
