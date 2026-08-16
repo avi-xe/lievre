@@ -64,10 +64,12 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
             size="icon"
             asChild
             className="relative focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount} unread)` : ""}`}
           >
-            <Link to="/notifications">
-              <Bell className="h-5 w-5" />
+            <Link
+              to="/notifications"
+              aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount} unread)` : ""}`}
+            >
+              <Bell className="h-5 w-5" aria-hidden="true" />
               {notificationCount > 0 && (
                 <Badge
                   variant="destructive"

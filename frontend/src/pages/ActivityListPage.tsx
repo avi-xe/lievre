@@ -126,16 +126,17 @@ function ActivityListEmpty() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
           <Map className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">No activities yet</h3>
+        <h2 className="mt-4 text-lg font-semibold">No activities yet</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Start tracking your workouts and they will appear here.
         </p>
-        <Button asChild className="mt-4">
-          <Link to="/activities/new" className="inline-flex items-center">
-            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-            New Activity
-          </Link>
-        </Button>
+        <Link
+          to="/activities/new"
+          className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+          New Activity
+        </Link>
       </CardContent>
     </Card>
   );
@@ -188,14 +189,15 @@ export function ActivityListPage() {
       <Card>
         <CardHeader className="p-3 sm:p-6">
           <div className="flex items-center justify-between">
-            <CardTitle>My Activities</CardTitle>
+            <h1 className="font-heading text-base leading-snug font-medium">My Activities</h1>
             <CardAction>
-              <Button asChild>
-                <Link to="/activities/new" className="inline-flex items-center">
-                  <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-                  New Activity
-                </Link>
-              </Button>
+              <Link
+                to="/activities/new"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+                New Activity
+              </Link>
             </CardAction>
           </div>
         </CardHeader>

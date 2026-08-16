@@ -301,7 +301,7 @@ export function NotificationsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <h1 className="flex items-center gap-2 font-heading text-base leading-snug font-medium">
               <Bell className="h-5 w-5" aria-hidden="true" />
               Notifications
               {unreadCount > 0 && (
@@ -309,7 +309,7 @@ export function NotificationsPage() {
                   {unreadCount}
                 </Badge>
               )}
-            </CardTitle>
+            </h1>
             {unreadCount > 0 && (
               <Button
                 variant="outline"

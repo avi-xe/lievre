@@ -47,7 +47,7 @@ export function LoginPage() {
               <Map className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+          <h1 className="font-heading text-2xl font-bold">Welcome back</h1>
           <CardDescription>
             Sign in to your account to continue
           </CardDescription>

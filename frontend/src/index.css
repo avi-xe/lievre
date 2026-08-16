@@ -110,12 +110,12 @@
   --chart-4: 43 70% 60%;
   --chart-5: 28 65% 60%;
 
-  /* Sport colors */
+  /* Sport colors — darkened for WCAG AA contrast on white */
   --ride: 204 48% 44%;
-  --run: 168 42% 42%;
+  --run: 168 42% 34%;
   --swim: 199 43% 24%;
-  --walk: 43 70% 60%;
-  --hike: 28 65% 60%;
+  --walk: 43 65% 36%;
+  --hike: 28 60% 38%;
 }
 
 .dark {
@@ -174,5 +174,17 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

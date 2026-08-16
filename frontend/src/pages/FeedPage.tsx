@@ -47,12 +47,13 @@ export function FeedPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-2xl">
+        <h1 className="sr-only">Feed</h1>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <Map className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold">No activities yet</h3>
+            <h2 className="mt-4 text-lg font-semibold">No activities yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {isAuthenticated
                 ? "Be the first to share an activity!"
@@ -74,6 +75,7 @@ export function FeedPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
+      <h1 className="sr-only">Feed</h1>
       {items.map((item) => (
         <ActivityCard key={item.id} activity={item} />
       ))}

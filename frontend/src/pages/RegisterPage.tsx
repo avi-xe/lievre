@@ -60,7 +60,7 @@ export function RegisterPage() {
               <Map className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <h1 className="font-heading text-2xl font-bold">Create an account</h1>
           <CardDescription>
             Join the community and start tracking your activities
           </CardDescription>
