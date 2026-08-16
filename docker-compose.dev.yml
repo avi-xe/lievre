@@ -36,6 +36,7 @@ services:
       - ./frontend/index.html:/app/index.html
       - ./frontend/vite.config.ts:/app/vite.config.ts
       - ./frontend/tsconfig.app.json:/app/tsconfig.app.json
+      - ./frontend/components.json:/app/components.json
     depends_on:
       app:
         condition: service_healthy
@@ -60,6 +61,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - caddydata:/data
       - caddyconfig:/config
     depends_on:
