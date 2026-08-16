@@ -6,6 +6,7 @@ import {
   mockComments,
   mockNotifications,
 } from "./data";
+import marathonRoute from "./marathon-route.json";
 
 const API_BASE = "/api";
 
@@ -135,6 +136,16 @@ export const handlers = [
       return new HttpResponse(null, { status: 204 });
     }
     return new HttpResponse("Activity not found", { status: 404 });
+  }),
+
+  // GeoJSON route
+  http.get(`${API_BASE}/activities/:id/geojson`, ({ params }) => {
+    // Return marathon route for GPX-imported activities
+    if (String(params.id).startsWith("activity-gpx-")) {
+      return HttpResponse.json(marathonRoute);
+    }
+    // Return empty for other activities
+    return HttpResponse.json({ type: "FeatureCollection", features: [] });
   }),
 
   // Likes
