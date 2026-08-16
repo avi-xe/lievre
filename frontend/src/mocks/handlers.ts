@@ -80,8 +80,9 @@ export const handlers = [
     return HttpResponse.json({ success: true });
   }),
 
-  http.get(`${API_BASE}/users/:id/activities`, () => {
-    return HttpResponse.json(mockActivities.slice(0, 2));
+  http.get(`${API_BASE}/users/:id/activities`, ({ params }) => {
+    const userActivities = mockActivities.filter((a) => a.user_id === params.id);
+    return HttpResponse.json(userActivities);
   }),
 
   // Feed

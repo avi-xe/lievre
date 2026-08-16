@@ -136,10 +136,10 @@ export function UsersPage() {
           {users.map((u) => (
             <Card key={u.id} className="transition-shadow hover:shadow-md">
               <CardContent className="p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Link
                     to={`/profile/${u.id}`}
-                    className="flex items-center space-x-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+                    className="flex min-w-0 items-center space-x-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
                   >
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={`/avatars/${u.id}.jpg`} alt="" />
@@ -161,7 +161,7 @@ export function UsersPage() {
                       onClick={() =>
                         handleFollow(u.id, u.is_following ?? false)
                       }
-                      className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="shrink-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       {u.is_following ? (
                         <>
