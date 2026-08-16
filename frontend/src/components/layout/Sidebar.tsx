@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Home, User, Activity, Bell, Settings } from "lucide-react";
+import { Home, User, Activity, Bell, Settings, Search } from "lucide-react";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -12,6 +12,7 @@ interface SidebarProps {
 const mainNavItems = [
   { to: "/", icon: Home, label: "Feed" },
   { to: "/activities", icon: Activity, label: "My Activities" },
+  { to: "/users", icon: Search, label: "Find People" },
   { to: "/profile", icon: User, label: "Profile" },
 ];
 
