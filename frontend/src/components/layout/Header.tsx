@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Bell, Search, Menu, Settings, LogOut, User, Map } from "lucide-react";
+import { Bell, Menu, Settings, LogOut, User, Map } from "lucide-react";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -18,8 +18,6 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
-  const location = useLocation();
-
   return (
     <header
       className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
@@ -51,19 +49,6 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
-          {/* Search */}
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Search"
-          >
-            <Link to="/search">
-              <Search className="h-5 w-5" />
-            </Link>
-          </Button>
-
           {/* Notifications */}
           <Button
             variant="ghost"

@@ -15,6 +15,7 @@ import { CreateActivityPage } from "./pages/CreateActivityPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { UsersPage } from "./pages/UsersPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/profile/:id" element={<ProfilePage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/users" element={<UsersPage />} />
               </Route>
             </Route>

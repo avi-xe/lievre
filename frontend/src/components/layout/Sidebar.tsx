@@ -1,18 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import {
-  Home,
-  Compass,
-  Activity,
-  User,
-  Settings,
-  HelpCircle,
-  Bookmark,
-  Users,
-} from "lucide-react";
+import { Home, User, Activity, Bell, Settings } from "lucide-react";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -21,16 +11,13 @@ interface SidebarProps {
 
 const mainNavItems = [
   { to: "/", icon: Home, label: "Feed" },
-  { to: "/explore", icon: Compass, label: "Explore" },
-  { to: "/record", icon: Activity, label: "Record" },
+  { to: "/activities", icon: Activity, label: "My Activities" },
   { to: "/profile", icon: User, label: "Profile" },
 ];
 
 const secondaryNavItems = [
-  { to: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
-  { to: "/groups", icon: Users, label: "Groups" },
+  { to: "/notifications", icon: Bell, label: "Notifications" },
   { to: "/settings", icon: Settings, label: "Settings" },
-  { to: "/help", icon: HelpCircle, label: "Help" },
 ];
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {

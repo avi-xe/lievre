@@ -19,11 +19,6 @@ export function Layout() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [sidebarOpen]);
 
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, []);
-
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
@@ -37,28 +32,21 @@ export function Layout() {
       {/* Skip to content link for keyboard users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring focus-visible:ring-offset-2"
       >
         Skip to main content
       </a>
 
-      <Header onMenuToggle={toggleSidebar} notificationCount={3} />
+      <Header onMenuToggle={toggleSidebar} />
 
       <div className="flex">
-        {/* Desktop sidebar - always visible on lg+ */}
-        <div className="hidden lg:block">
-          <Sidebar isOpen={true} />
-        </div>
-
-        {/* Mobile sidebar - controlled by state */}
-        <div className="lg:hidden">
-          <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
-        </div>
+        {/* Sidebar - handles both desktop (always visible) and mobile (controlled by state) */}
+        <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
         {/* Main content */}
         <main
           id="main-content"
-          className="flex-1 pb-20 lg:pb-0"
+          className="flex-1 pb-20 lg:pb-0 lg:pl-64"
           role="main"
           tabIndex={-1}
         >
