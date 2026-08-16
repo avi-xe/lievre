@@ -184,9 +184,9 @@ export function ActivityListPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4">
+    <div className="mx-auto max-w-3xl space-y-4 p-2 sm:p-4">
       <Card>
-        <CardHeader>
+        <CardHeader className="p-3 sm:p-6">
           <div className="flex items-center justify-between">
             <CardTitle>My Activities</CardTitle>
             <CardAction>
@@ -199,7 +199,7 @@ export function ActivityListPage() {
             </CardAction>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           {/* Desktop: Table */}
           <div className="hidden md:block">
             <Table>
@@ -255,23 +255,18 @@ export function ActivityListPage() {
           </div>
 
           {/* Mobile: Cards */}
-          <div className="space-y-3 md:hidden">
+          <div className="space-y-2 md:hidden">
             {activities.map((activity) => (
               <Link
                 key={activity.id}
                 to={`/activities/${activity.id}`}
-                className="block rounded-lg border p-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="block rounded-lg border p-2.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{activity.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(activity.started_at).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 flex-1 truncate text-sm font-medium">{activity.title}</p>
                   <Badge
                     variant={activityTypeBadgeVariant[activity.activity_type] ?? "secondary"}
-                    className={`shrink-0 ${activityColors[activity.activity_type] ?? ""}`}
+                    className={`shrink-0 text-xs ${activityColors[activity.activity_type] ?? ""}`}
                   >
                     {(() => {
                       const Icon = activityIcons[activity.activity_type] || Bike;
@@ -280,9 +275,13 @@ export function ActivityListPage() {
                     {activity.activity_type}
                   </Badge>
                 </div>
-                <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{new Date(activity.started_at).toLocaleDateString()}</span>
+                  <span>·</span>
                   <span>{formatDistance(activity.distance_meters)}</span>
+                  <span>·</span>
                   <span>{formatDuration(activity.duration_seconds)}</span>
+                  <span>·</span>
                   <span>♥ {activity.like_count ?? 0}</span>
                 </div>
               </Link>
