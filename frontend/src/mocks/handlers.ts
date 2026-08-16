@@ -209,7 +209,7 @@ export const handlers = [
 
   // Notifications
   http.get(`${API_BASE}/notifications`, () => {
-    return HttpResponse.json(mockNotifications);
+    return HttpResponse.json({ notifications: mockNotifications, unread_count: 2 });
   }),
 
   http.post(`${API_BASE}/notifications/:id/read`, () => {
