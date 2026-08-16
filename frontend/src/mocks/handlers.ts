@@ -177,8 +177,9 @@ export const handlers = [
 
   // GPX Import
   http.post(`${API_BASE}/import/gpx`, async () => {
+    const id = `activity-gpx-${Date.now()}`;
     const marathonActivity = {
-      id: `activity-gpx-${Date.now()}`,
+      id,
       user_id: mockUser.id,
       activity_type: "run",
       title: "Berlin Marathon",
@@ -192,7 +193,7 @@ export const handlers = [
       username: mockUser.username,
     };
     mockActivities.unshift(marathonActivity);
-    return HttpResponse.json(marathonActivity, { status: 201 });
+    return HttpResponse.json({ activity_id: id, ...marathonActivity }, { status: 201 });
   }),
 
   // Notifications
