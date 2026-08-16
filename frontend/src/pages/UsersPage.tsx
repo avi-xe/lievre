@@ -135,25 +135,25 @@ export function UsersPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {users.map((u) => (
             <Card key={u.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <Link
-                    to={`/profile/${u.id}`}
-                    className="flex min-w-0 items-center space-x-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
-                  >
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={`/avatars/${u.id}.jpg`} alt="" />
-                      <AvatarFallback>
-                        {u.username?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
+              <CardContent className="relative p-4">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 shrink-0">
+                    <AvatarImage src={`/avatars/${u.id}.jpg`} alt="" />
+                    <AvatarFallback>
+                      {u.username?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/profile/${u.id}`}
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+                    >
                       <p className="font-medium">{u.username}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {u.email}
-                      </p>
-                    </div>
-                  </Link>
+                    </Link>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {u.email}
+                    </p>
+                  </div>
                   {currentUser?.id !== u.id && (
                     <Button
                       variant={u.is_following ? "outline" : "default"}
