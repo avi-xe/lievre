@@ -7,8 +7,11 @@ mod import;
 mod notifications;
 mod social;
 mod worker;
+pub mod ws;
 
 use axum::{
+    extract::State,
+    response::IntoResponse,
     routing::{delete, get, post, put},
     Router,
 };
@@ -20,6 +23,8 @@ use lievre_federation::config::FederationDb;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::ws::ConnectionManager;
+
 /// Combined application state
 #[derive(Clone)]
 pub struct AppState {
@@ -30,6 +35,7 @@ pub struct AppState {
     pub notification_repo: NotificationRepository,
     pub job_repo: JobRepository,
     pub fed_db: FederationDb,
+    pub ws_manager: ConnectionManager,
 }
 
 #[tokio::main]
@@ -85,6 +91,7 @@ async fn main() -> anyhow::Result<()> {
         notification_repo,
         job_repo,
         fed_db,
+        ws_manager: ConnectionManager::new(),
     };
 
     // Build router
@@ -152,6 +159,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/import/gpx", post(import::import_gpx))
         .route("/api/import/tcx", post(import::import_tcx))
         .route("/api/import/strava", post(import::import_strava))
+        // WebSocket
+        .route("/ws", get(ws_handler))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
@@ -175,6 +184,42 @@ async fn main() -> anyhow::Result<()> {
 
 async fn health() -> &'static str {
     "OK"
+}
+
+/// WebSocket upgrade handler
+///
+/// GET /ws?token=<jwt>
+/// Upgrades to WebSocket and registers the connection for real-time notifications.
+async fn ws_handler(
+    ws: axum::extract::ws::WebSocketUpgrade,
+    State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> impl IntoResponse {
+    // Extract token from query params
+    let token = match params.get("token") {
+        Some(t) => t.clone(),
+        None => {
+            return axum::response::Response::builder()
+                .status(401)
+                .body("Missing token".into())
+                .unwrap();
+        }
+    };
+
+    // Verify token and get user_id
+    let user_id = match state.auth.verify_token(&token).await {
+        Ok(user) => user.id,
+        Err(_) => {
+            return axum::response::Response::builder()
+                .status(401)
+                .body("Invalid token".into())
+                .unwrap();
+        }
+    };
+
+    let manager = state.ws_manager.clone();
+
+    ws.on_upgrade(move |socket| ws::handle_socket(socket, user_id, manager))
 }
 
 #[cfg(test)]

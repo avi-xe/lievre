@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/useAuth";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,9 +19,13 @@ interface HeaderProps {
   notificationCount?: number;
 }
 
-export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
+export function Header({ onMenuToggle, notificationCount: propCount }: HeaderProps) {
   const { user, logout } = useAuth();
+  const { unreadCount, isConnected } = useWebSocketContext();
   const navigate = useNavigate();
+
+  // Use WebSocket unread count if available, otherwise fall back to prop
+  const notificationCount = unreadCount > 0 ? unreadCount : (propCount ?? 0);
 
   const handleLogout = () => {
     logout();
@@ -58,6 +63,13 @@ export function Header({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
+          {/* Connection status */}
+          <div
+            className={`h-2 w-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-muted"}`}
+            title={isConnected ? "Real-time notifications active" : "Disconnected"}
+            aria-label={isConnected ? "Connected" : "Disconnected"}
+          />
+
           {/* Notifications */}
           <Link
             to="/notifications"

@@ -14,7 +14,7 @@ lievre-shared = { path = "../shared" }
 lievre-federation = { path = "../federation" }
 
 tokio.workspace = true
-axum = { version = "0.7", features = ["macros", "multipart"] }
+axum = { version = "0.7", features = ["macros", "multipart", "ws"] }
 tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -28,6 +28,8 @@ anyhow.workspace = true
 jsonwebtoken.workspace = true
 argon2.workspace = true
 activitypub_federation = { version = "0.6", default-features = false }
+tokio-tungstenite = "0.24"
+futures-util = "0.3"
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["util"] }

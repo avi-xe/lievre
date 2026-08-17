@@ -19,6 +19,15 @@ async fn auth_user(
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))
 }
 
+/// Broadcast a notification to a user via WebSocket
+async fn broadcast_notification(
+    state: &crate::AppState,
+    user_id: &str,
+    notification: &serde_json::Value,
+) {
+    state.ws_manager.send_to_user(user_id, notification).await;
+}
+
 // ============================================================
 // FOLLOW
 // ============================================================
@@ -38,10 +47,25 @@ pub async fn follow_user(
 
     // Notify the target user (ignore self-follows)
     if user.id != target_id {
-        let _ = state
+        let notification = state
             .notification_repo
             .create(&target_id, &user.id, "follow", "user", &user.id, None)
             .await;
+
+        // Broadcast via WebSocket
+        if let Ok(n) = notification {
+            let ws_msg = json!({
+                "type": "notification",
+                "data": {
+                    "id": n.id,
+                    "type": "follow",
+                    "actor": user.username,
+                    "content": format!("{} started following you", user.username),
+                    "created_at": n.created_at
+                }
+            });
+            broadcast_notification(&state, &target_id, &ws_msg).await;
+        }
     }
 
     Ok(Json(json!({ "ok": true })))
@@ -156,7 +180,7 @@ pub async fn like_activity(
     // Notify activity owner (ignore self-likes)
     if let Ok(Some(activity)) = state.activity_repo.find_by_id(&activity_id).await {
         if activity.user_id != user.id {
-            let _ = state
+            let notification = state
                 .notification_repo
                 .create(
                     &activity.user_id,
@@ -167,6 +191,23 @@ pub async fn like_activity(
                     None,
                 )
                 .await;
+
+            // Broadcast via WebSocket
+            if let Ok(n) = notification {
+                let ws_msg = json!({
+                    "type": "notification",
+                    "data": {
+                        "id": n.id,
+                        "type": "like",
+                        "actor": user.username,
+                        "content": format!("{} liked your {}", user.username, activity.title.unwrap_or_default()),
+                        "entity_type": "activity",
+                        "entity_id": activity_id,
+                        "created_at": n.created_at
+                    }
+                });
+                broadcast_notification(&state, &activity.user_id, &ws_msg).await;
+            }
         }
     }
 
@@ -264,7 +305,7 @@ pub async fn add_comment(
             } else {
                 body.content.clone()
             };
-            let _ = state
+            let notification = state
                 .notification_repo
                 .create(
                     &activity.user_id,
@@ -275,6 +316,24 @@ pub async fn add_comment(
                     Some(&preview),
                 )
                 .await;
+
+            // Broadcast via WebSocket
+            if let Ok(n) = notification {
+                let ws_msg = json!({
+                    "type": "notification",
+                    "data": {
+                        "id": n.id,
+                        "type": "comment",
+                        "actor": user.username,
+                        "content": format!("{} commented on your {}", user.username, activity.title.unwrap_or_default()),
+                        "preview": preview,
+                        "entity_type": "activity",
+                        "entity_id": activity_id,
+                        "created_at": n.created_at
+                    }
+                });
+                broadcast_notification(&state, &activity.user_id, &ws_msg).await;
+            }
         }
     }
 
