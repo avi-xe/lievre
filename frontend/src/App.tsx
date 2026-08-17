@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Layout } from "./components/layout";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,29 +22,31 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <TooltipProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+        <WebSocketProvider>
+          <TooltipProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* Protected routes with layout */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<FeedPage />} />
-                <Route path="/activities" element={<ActivityListPage />} />
-                <Route path="/activities/new" element={<CreateActivityPage />} />
-                <Route path="/activities/:id" element={<ActivityDetailPage />} />
-                <Route path="/activities/:id/edit" element={<ActivityEditPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/:id" element={<ProfilePage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/users" element={<UsersPage />} />
+              {/* Protected routes with layout */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<FeedPage />} />
+                  <Route path="/activities" element={<ActivityListPage />} />
+                  <Route path="/activities/new" element={<CreateActivityPage />} />
+                  <Route path="/activities/:id" element={<ActivityDetailPage />} />
+                  <Route path="/activities/:id/edit" element={<ActivityEditPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile/:id" element={<ProfilePage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/users" element={<UsersPage />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </TooltipProvider>
+            </Routes>
+          </TooltipProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </BrowserRouter>
   );
