@@ -7,6 +7,7 @@ export interface User {
 export interface Activity {
   id: string;
   user_id: string;
+  username?: string;
   activity_type: string;
   title: string;
   description: string | null;

@@ -28,7 +28,13 @@
     "jsx": "react-jsx",
 
     /* Additional strictness */
-    "erasableSyntaxOnly": true
+    "erasableSyntaxOnly": true,
+
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

@@ -906,6 +906,241 @@ CREATE TABLE jobs (
 
 ---
 
+## Epic 13: Frontend Design System
+
+> shadcn/ui + Tailwind CSS foundation for all UI.
+
+### 13.1 Project Initialization
+**Priority:** P0 | **Estimate:** S
+
+**Story:** As a developer, I want shadcn/ui initialized in the frontend so that I can use its components.
+
+**Acceptance Criteria:**
+- [ ] shadcn/ui CLI initialized in `frontend/`
+- [ ] Tailwind CSS configured with custom color tokens
+- [ ] CSS variables for our palette (primary, secondary, sport colors)
+- [ ] `cn()` utility function available
+- [ ] Components directory structure created
+
+**Technical Notes:**
+```bash
+cd frontend
+npx shadcn@latest init
+# Select: New York style, Slate base color
+# CSS variables: Yes
+```
+
+---
+
+### 13.2 Core Components Installation
+**Priority:** P0 | **Estimate:** S
+
+**Story:** As a developer, I want core shadcn/ui components installed so that I can build screens.
+
+**Acceptance Criteria:**
+- [ ] Button (primary, secondary, ghost, destructive, outline, link)
+- [ ] Card (CardHeader, CardContent, CardFooter)
+- [ ] Input, Label, Textarea
+- [ ] Badge (sport type variants)
+- [ ] Avatar (with fallback)
+- [ ] Separator
+- [ ] Tabs
+- [ ] Toast (sonner)
+
+**Technical Notes:**
+```bash
+npx shadcn@latest add button card input label textarea badge avatar separator tabs toast
+```
+
+---
+
+### 13.3 Layout Shell
+**Priority:** P0 | **Estimate:** M
+
+**Story:** As a user, I want a consistent layout so that I can navigate the app.
+
+**Acceptance Criteria:**
+- [ ] Header with logo, search, notifications, profile menu
+- [ ] Sidebar (desktop) with navigation links
+- [ ] Bottom nav (mobile) with 4 tabs: Feed, Explore, Record, Profile
+- [ ] Main content area with responsive padding
+- [ ] Responsive: sidebar collapses on mobile, bottom nav appears
+
+**Technical Notes:**
+- Use shadcn `Sidebar` component for desktop
+- Custom bottom nav for mobile
+- Header uses `Navigation Menu` or custom flex layout
+
+---
+
+### 13.4 Auth Screens
+**Priority:** P0 | **Estimate:** M
+
+**Story:** As a user, I want to log in and register so that I can access my account.
+
+**Acceptance Criteria:**
+- [ ] Login page: Card with email + password + "Sign In" button
+- [ ] Register page: Card with name + email + password + confirm
+- [ ] "Sign in with Fediverse" option with WebFinger dialog
+- [ ] Forgot password link
+- [ ] Form validation with error messages
+- [ ] Redirect to feed after login
+
+**Technical Notes:**
+- Centered Card with `max-w-md`
+- Use shadcn `Input`, `Button`, `Label`, `Separator`
+- Fediverse login: `Dialog` for instance URL input
+
+---
+
+### 13.5 Feed Screen
+**Priority:** P0 | **Estimate:** M
+
+**Story:** As a user, I want to see my feed so that I can view activities from people I follow.
+
+**Acceptance Criteria:**
+- [ ] Activity cards with: avatar, name, title, stats, engagement
+- [ ] Sport type badge (ride/run/swim/walk/hike)
+- [ ] Like, comment, repost buttons
+- [ ] Empty state when no activities
+- [ ] Loading skeleton
+- [ ] Infinite scroll or pagination
+
+**Technical Notes:**
+- Use shadcn `Card`, `Badge`, `Avatar`, `Button`, `Skeleton`, `Empty`
+- Single column, `max-w-2xl`
+- Infinite scroll with `IntersectionObserver`
+
+---
+
+### 13.6 Activity Detail Screen
+**Priority:** P0 | **Estimate:** L
+
+**Story:** As a user, I want to see full activity details so that I can analyze my performance.
+
+**Acceptance Criteria:**
+- [ ] Header: title, sport badge, user avatar, date
+- [ ] Map view with route (Leaflet/Mapbox)
+- [ ] Stats grid: distance, time, speed, elevation
+- [ ] Charts: speed/elevation over time (Recharts)
+- [ ] Splits table (per-km stats)
+- [ ] Comments section
+- [ ] Engagement buttons (like, comment, repost)
+
+**Technical Notes:**
+- Two-column on desktop (map left, stats right)
+- Use shadcn `Card`, `Badge`, `Table`, `Chart`, `Tabs`, `Separator`
+- Map: Leaflet with OpenStreetMap tiles
+
+---
+
+### 13.7 Profile Screen
+**Priority:** P0 | **Estimate:** M
+
+**Story:** As a user, I want to view and edit my profile so that I can manage my identity.
+
+**Acceptance Criteria:**
+- [ ] Profile header: avatar, name, bio, stats (total distance, activities)
+- [ ] Follow/unfollow button
+- [ ] Tabs: Activities, Stats, Kudos
+- [ ] Activity list with pagination
+- [ ] Settings link
+
+**Technical Notes:**
+- Use shadcn `Card`, `Avatar`, `Tabs`, `Badge`, `Button`
+- Header card with flex layout
+
+---
+
+### 13.8 Record Activity Screen
+**Priority:** P0 | **Estimate:** M
+
+**Story:** As a user, I want to record or upload an activity so that I can log my training.
+
+**Acceptance Criteria:**
+- [ ] Activity type selector (toggle group)
+- [ ] Manual entry form: distance, time, date, title
+- [ ] GPX upload with progress bar
+- [ ] Success toast after creation
+- [ ] Redirect to activity detail
+
+**Technical Notes:**
+- Use shadcn `Toggle Group`, `Input`, `Select`, `Button`, `Progress`, `Toast`
+- Single card layout
+
+---
+
+### 13.9 Explore Screen
+**Priority:** P1 | **Estimate:** M
+
+**Story:** As a user, I want to discover activities and users so that I can find interesting content.
+
+**Acceptance Criteria:**
+- [ ] Search bar with autocomplete
+- [ ] Filter chips: sport type, distance range, date range
+- [ ] Activity grid or list
+- [ ] User cards for discovery
+- [ ] Optional map view toggle
+
+**Technical Notes:**
+- Use shadcn `Command`, `Toggle Group`, `Badge`, `Card`
+- Grid layout with responsive columns
+
+---
+
+### 13.10 Notifications Screen
+**Priority:** P1 | **Estimate:** S
+
+**Story:** As a user, I want to see my notifications so that I know about interactions.
+
+**Acceptance Criteria:**
+- [ ] Notification list with avatars and timestamps
+- [ ] Types: like, comment, follow, repost
+- [ ] Mark as read
+- [ ] Bell icon with count in header
+
+**Technical Notes:**
+- Use shadcn `Card`, `Avatar`, `Badge`, `Separator`
+- Single column list
+
+---
+
+### 13.11 Settings Screen
+**Priority:** P1 | **Estimate:** M
+
+**Story:** As a user, I want to configure my settings so that I can personalize my experience.
+
+**Acceptance Criteria:**
+- [ ] Profile settings: name, bio, avatar upload
+- [ ] Privacy: visibility defaults
+- [ ] Notifications: push, email preferences
+- [ ] Units: km/mi, kg/lbs
+- [ ] Connected accounts: Fediverse
+
+**Technical Notes:**
+- Use shadcn `Card`, `Input`, `Switch`, `Select`, `Button`, `Sidebar`
+- Sidebar navigation for settings sections
+
+---
+
+### 13.12 Charts & Data Visualization
+**Priority:** P1 | **Estimate:** M
+
+**Story:** As a user, I want to see charts of my activities so that I can analyze trends.
+
+**Acceptance Criteria:**
+- [ ] Speed over time chart
+- [ ] Elevation profile chart
+- [ ] Weekly/monthly distance chart
+- [ ] Activity calendar (heatmap)
+
+**Technical Notes:**
+- Use shadcn `Chart` (Recharts wrapper)
+- Responsive sizing
+- Sport color coding
+
+---
+
 ## Milestones
 
 ### MVP (v0.1.0)
@@ -919,6 +1154,7 @@ Epics included:
 - ✅ Epic 5: Social (follow, like, feed) — core complete
 - ✅ Epic 6: Federation (basic) — COMPLETE (Exercise Object + Like Federation merged)
 - ⏳ Epic 7: PWA (basic)
+- ⏳ Epic 13: Frontend Design System (Phase 1-2)
 
 **Federation status:** Both Exercise Object (PR #5) and Like/Kudos Federation (PR #6) are now merged. All federation endpoints functional. Remaining federation work (HTTP signatures, pagination) is post-MVP.
 

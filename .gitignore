@@ -1,46 +1,6 @@
-# Rust
-/target
-**/*.rs.bk
-
-# Environment
-.env
-.env.local
-
-# Database
+target/
+data/
 *.db
 *.db-wal
 *.db-shm
-data/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Docker
-docker-compose.override.yml
-
-# Logs
-*.log
-logs/
-
-# Build artifacts
-/dist
-/build
-
-# Coverage
-*.profraw
-*.profdata
-lcov.info
-
-# E2E tests
-e2e/node_modules/
-e2e/playwright/
-e2e/test-results/
-e2e/playwright-report/
+docker-compose-penpot.yaml
